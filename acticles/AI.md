@@ -2,7 +2,7 @@
 
 title: "AI"
 date: 2026-10-13
-category: Essay
+category: Article
 description: "AI."
 ---
 
