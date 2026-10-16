@@ -1,59 +1,227 @@
 ---
 
-title: "AI"
+title: "AI - Wstęp"
 date: 2026-10-13
 category: Article
-description: "AI."
+description: "AI - Wstęp"
 ---
 
-# AI: An Opportunity and a Necessity for Small Technology Companies
+# Wstęp do matematyki używanej przy opisie AI
 
-Artificial intelligence is no longer just a technological trend — it is becoming a key factor in business competitiveness. For small technology companies, AI represents a unique opportunity to compete with larger organizations by improving efficiency, accelerating innovation, reducing costs, and delivering better products and services with limited resources.
+Ten tekst to **wprowadzenie**, nie pełny kurs. Ma dać intuicję i zapis formalny pojęć, które pojawiają się przy opisie małych modeli językowych (embedding, attention, MLP, strata, gradienty).
 
-However, AI is not only an opportunity; it is increasingly becoming a necessity. Companies that embrace AI can automate repetitive tasks, support better decision-making, accelerate software development, and focus their talent on creating real business value. Those that fail to adapt risk losing their competitive edge, not necessarily because their products are inferior, but because their competitors will be able to operate faster, smarter, and more efficiently.
+Zakładamy poziom: działania na liczbach, potęgi, funkcja wykładnicza i logarytm naturalny. Resztę budujemy od zera.
 
-Ignoring AI today may become one of the biggest barriers to growth tomorrow. As AI capabilities continue to evolve, the gap between companies that actively develop their AI capabilities and those that do not will likely widen. What is currently a competitive advantage may soon become a basic requirement for staying in the market.
+---
 
-**For small technology companies, investing in AI is no longer just about innovation — it is about future-proofing the business.** The real risk is not adopting AI too early, but waiting until it is too late to catch up.
+## 1. Skalar, wektor, macierz
 
-# AI: An Opportunity and a Necessity for Small Technology Companies
+**Skalar** — pojedyncza liczba, np. $3{,}14$ albo strata $\mathcal{L}$.
 
-Artificial intelligence is no longer just a technological trend — it is becoming a key factor in business competitiveness. For small technology companies, AI represents a unique opportunity to compete with larger organizations by improving efficiency, accelerating innovation, reducing costs, and delivering better products and services with limited resources.
+**Wektor** — uporządkowana lista liczb o ustalonej długości $d$:
 
-However, AI is not only an opportunity; it is increasingly becoming a necessity. Companies that embrace AI can automate repetitive tasks, support better decision-making, accelerate software development, and focus their talent on creating real business value. Those that fail to adapt risk losing their competitive edge, not necessarily because their products are inferior, but because their competitors will be able to operate faster, smarter, and more efficiently.
+$$
+\mathbf{x} = (x_0, x_1, \ldots, x_{d-1}) \in \mathbb{R}^d.
+$$
 
-Ignoring AI today may become one of the biggest barriers to growth tomorrow. As AI capabilities continue to evolve, the gap between companies that actively develop their AI capabilities and those that do not will likely widen. What is currently a competitive advantage may soon become a basic requirement for staying in the market.
+Przykład przy $d=3$: $\mathbf{x}=(-0{,}03,\;0{,}08,\;-0{,}23)$.
 
-**For small technology companies, investing in AI is no longer just about innovation — it is about future-proofing the business.** The real risk is not adopting AI too early, but waiting until it is too late to catch up.
+**Macierz** — tablica liczb o $m$ wierszach i $n$ kolumnach:
 
-# AI: An Opportunity and a Necessity for Small Technology Companies
+$$
+A \in \mathbb{R}^{m \times n}, \qquad
+A = \begin{pmatrix}
+A_{00} & A_{01} & \cdots & A_{0,n-1} \\
+\vdots & \vdots & \ddots & \vdots \\
+A_{m-1,0} & \cdots & \cdots & A_{m-1,n-1}
+\end{pmatrix}.
+$$
 
-Artificial intelligence is no longer just a technological trend — it is becoming a key factor in business competitiveness. For small technology companies, AI represents a unique opportunity to compete with larger organizations by improving efficiency, accelerating innovation, reducing costs, and delivering better products and services with limited resources.
+W AI często:
 
-However, AI is not only an opportunity; it is increasingly becoming a necessity. Companies that embrace AI can automate repetitive tasks, support better decision-making, accelerate software development, and focus their talent on creating real business value. Those that fail to adapt risk losing their competitive edge, not necessarily because their products are inferior, but because their competitors will be able to operate faster, smarter, and more efficiently.
+| obiekt | sens |
+|--------|------|
+| wiersz macierzy embeddingów | wektor jednego tokena |
+| macierz wag $W$ | uczy się przekształcać wektory |
 
-Ignoring AI today may become one of the biggest barriers to growth tomorrow. As AI capabilities continue to evolve, the gap between companies that actively develop their AI capabilities and those that do not will likely widen. What is currently a competitive advantage may soon become a basic requirement for staying in the market.
+---
 
-**For small technology companies, investing in AI is no longer just about innovation — it is about future-proofing the business.** The real risk is not adopting AI too early, but waiting until it is too late to catch up.
+## 2. Dodawanie wektorów
 
-# AI: An Opportunity and a Necessity for Small Technology Companies
+Dodajemy **składowa po składowej** (wektory muszą mieć tę samą długość):
 
-Artificial intelligence is no longer just a technological trend — it is becoming a key factor in business competitiveness. For small technology companies, AI represents a unique opportunity to compete with larger organizations by improving efficiency, accelerating innovation, reducing costs, and delivering better products and services with limited resources.
+$$
+(\mathbf{a}+\mathbf{b})_k = a_k + b_k.
+$$
 
-However, AI is not only an opportunity; it is increasingly becoming a necessity. Companies that embrace AI can automate repetitive tasks, support better decision-making, accelerate software development, and focus their talent on creating real business value. Those that fail to adapt risk losing their competitive edge, not necessarily because their products are inferior, but because their competitors will be able to operate faster, smarter, and more efficiently.
+Przykład (embedding + pozycja):
 
-Ignoring AI today may become one of the biggest barriers to growth tomorrow. As AI capabilities continue to evolve, the gap between companies that actively develop their AI capabilities and those that do not will likely widen. What is currently a competitive advantage may soon become a basic requirement for staying in the market.
+$$
+\mathbf{x}_t = \mathbf{e}_{u_t} + \mathbf{p}_t.
+$$
 
-**For small technology companies, investing in AI is no longer just about innovation — it is about future-proofing the business.** The real risk is not adopting AI too early, but waiting until it is too late to catch up.
+---
 
-# AI: An Opportunity and a Necessity for Small Technology Companies
+## 3. Iloczyn skalarny (dot product)
 
-Artificial intelligence is no longer just a technological trend — it is becoming a key factor in business competitiveness. For small technology companies, AI represents a unique opportunity to compete with larger organizations by improving efficiency, accelerating innovation, reducing costs, and delivering better products and services with limited resources.
+Dla $\mathbf{a},\mathbf{b}\in\mathbb{R}^d$:
 
-However, AI is not only an opportunity; it is increasingly becoming a necessity. Companies that embrace AI can automate repetitive tasks, support better decision-making, accelerate software development, and focus their talent on creating real business value. Those that fail to adapt risk losing their competitive edge, not necessarily because their products are inferior, but because their competitors will be able to operate faster, smarter, and more efficiently.
+$$
+\mathbf{a}\cdot\mathbf{b}
+= \sum_{k=0}^{d-1} a_k\,b_k.
+$$
 
-Ignoring AI today may become one of the biggest barriers to growth tomorrow. As AI capabilities continue to evolve, the gap between companies that actively develop their AI capabilities and those that do not will likely widen. What is currently a competitive advantage may soon become a basic requirement for staying in the market.
+Intuicja: miara „podobnego kierunku”. Duży dodatni wynik → wektory wskazują w podobną stronę.
 
-**For small technology companies, investing in AI is no longer just about innovation — it is about future-proofing the business.** The real risk is not adopting AI too early, but waiting until it is too late to catch up.
+W attention score to właśnie iloczyn skalarny $\mathbf{q}\cdot\mathbf{k}$ (potem dzielony przez $\sqrt{d}$).
 
+---
 
+## 4. Mnożenie wektor × macierz
+
+Niech $\mathbf{x}\in\mathbb{R}^{d}$ oraz $W\in\mathbb{R}^{d\times n}$. Wynik $\mathbf{y}\in\mathbb{R}^{n}$:
+
+$$
+y_j = \sum_{i=0}^{d-1} x_i\,W_{ij}, \qquad j=0,\ldots,n-1.
+$$
+
+To **projekcja liniowa**: ten sam $\mathbf{x}$ przez różne $W$ daje Q, K, V albo wejście do MLP.
+
+Zapis skrótowy w tekstach o AI:
+
+$$
+\mathbf{y} = \mathbf{x}^\top W
+\quad\text{(w zależności od konwencji wierszy/kolumn)}.
+$$
+
+W programie edukacyjnym liczymy wprost sumę jak wyżej.
+
+---
+
+## 5. Funkcje nieliniowe: $\tanh$, $\exp$, $\log$
+
+Sieć bez nieliniowości to tylko składanie mnożeń macierzy (nadal „jedna” wielka liniowość). Dlatego pojawiają się funkcje:
+
+**Tangens hiperboliczny** (w MLP):
+
+$$
+\tanh(z) = \frac{e^{z}-e^{-z}}{e^{z}+e^{-z}} \in (-1,1).
+$$
+
+**Eksponenta** $e^{z}$ — w softmaxie.
+
+**Logarytm naturalny** $\log$ — w stracie $-\log\pi_{y}$ (gdy $\pi_y$ rośnie, strata maleje).
+
+---
+
+## 6. Softmax
+
+Z wektora „surowych” ocen $\boldsymbol{\ell}=(\ell_0,\ldots,\ell_{V-1})$ robimy **rozkład prawdopodobieństwa**:
+
+$$
+\pi_v
+= \frac{e^{\ell_v}}{\sum_{v'=0}^{V-1} e^{\ell_{v'}}},
+\qquad
+\pi_v \ge 0, \quad \sum_v \pi_v = 1.
+$$
+
+Stabilny zapis numeryczny (ten sam wynik matematyczny):
+
+$$
+\pi_v
+= \frac{e^{\ell_v - m}}{\sum_{v'} e^{\ell_{v'}-m}},
+\quad m=\max_{v'}\ell_{v'}.
+$$
+
+Użycie: wagi uwagi w attention oraz prawdopodobieństwa następnego tokena na wyjściu.
+
+---
+
+## 7. Strata (loss) przy klasyfikacji tokena
+
+Model przewiduje rozkład $\boldsymbol{\pi}$ po całym vocabularzu. Prawdziwy następny znak ma indeks $y$.
+
+**Cross-entropy** (u nas dla jednego przykładu):
+
+$$
+\mathcal{L} = -\log \pi_y.
+$$
+
+- Jeśli $\pi_y \to 1$, to $\mathcal{L}\to 0$ (dobrze).
+- Jeśli $\pi_y$ jest małe, $\mathcal{L}$ jest duże (źle).
+
+To skalar — od niego zaczyna się liczenie gradientów.
+
+---
+
+## 8. Pochodna i reguła łańcuchowa (idea autogradu)
+
+**Pochodna** mówi, jak bardzo wyjście zmienia się przy małej zmianie wejścia.
+
+Dla złożenia $z=f(g(x))$:
+
+$$
+\frac{dz}{dx} = \frac{dz}{dg}\cdot\frac{dg}{dx}.
+$$
+
+W sieci $\mathcal{L}$ zależy od tysięcy operacji. **Autograd** idzie od $\mathcal{L}$ wstecz i dla każdej operacji stosuje lokalną regułę, np.:
+
+| operacja | reguła (szkic) |
+|----------|----------------|
+| $c=a+b$ | $\partial\mathcal{L}/\partial a \mathrel{+}= \partial\mathcal{L}/\partial c$ (to samo dla $b$) |
+| $c=a\cdot b$ | $\partial\mathcal{L}/\partial a \mathrel{+}= b\,\partial\mathcal{L}/\partial c$ |
+| $c=\tanh(a)$ | $\partial\mathcal{L}/\partial a \mathrel{+}= (1-\tanh^2 a)\,\partial\mathcal{L}/\partial c$ |
+
+Na końcu każdy parametr $\theta$ ma liczbę $\partial\mathcal{L}/\partial\theta$ — **gradient**.
+
+---
+
+## 9. Spadek gradientowy (SGD)
+
+Uczenie w najprostszej postaci:
+
+$$
+\theta \leftarrow \theta - \eta\,\frac{\partial\mathcal{L}}{\partial\theta}.
+$$
+
+- $\eta>0$ — **learning rate** (u nas np. $0{,}025$),
+- znak minus: idziemy w stronę **zmniejszania** $\mathcal{L}$.
+
+Za duże $\eta$ — niestabilność; za małe — bardzo wolna nauka.
+
+---
+
+## 10. Co z tego składa się w „mini-GPT”
+
+Kolejność pojęć w modelu znakowym:
+
+1. **Token** → indeks w vocabularzu  
+2. **Embedding** $E$ + **pozycja** $P$ → wektor $\mathbf{x}_t$  
+3. **Q, K, V** — trzy projekcje liniowe $\mathbf{x}_t$  
+4. **Attention** — iloczyny skalarne, softmax, ważona suma $\mathbf{v}$  
+5. **MLP** — mnożenia przez $W_1,W_2$ + $\tanh$ + residual  
+6. **Logity** → **softmax** → $\boldsymbol{\pi}$  
+7. **$\mathcal{L}=-\log\pi_y$** → **backward** → **SGD**
+
+Każdy z tych kroków używa wyłącznie narzędzi z punktów 1–9.
+
+---
+
+## 11. Minimalny słownik symboli
+
+| symbol | znaczenie |
+|--------|-----------|
+| $\mathbb{R}^d$ | wektory długości $d$ |
+| $d$ / $d_{\mathrm{model}}$ | szerokość reprezentacji |
+| $d_h$ / $d_{\mathrm{hidden}}$ | szerokość ukrytej warstwy MLP |
+| $V$ | rozmiar vocabularza |
+| $T$ | długość kontekstu |
+| $\eta$ | learning rate |
+| $\mathbf{x},\mathbf{q},\mathbf{k},\mathbf{v},\mathbf{h}$ | wektory aktywacji |
+| $E,P,W,\mathbf{b}$ | parametry (wagi) |
+| $\boldsymbol{\pi}$ | rozkład prawdopodobieństwa |
+| $\mathcal{L}$ | strata (skalar) |
+
+---
+
+*To jest warstwa „matematyka pod spodem”. Opis konkretnego przebiegu obliczeń na zdaniu (np. krótkim przykładzie znakowym) buduje się już z tych klocków.*
