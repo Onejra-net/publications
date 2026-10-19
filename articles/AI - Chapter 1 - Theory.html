@@ -1,0 +1,824 @@
+<!DOCTYPE html>
+
+<html lang="en"><head><meta charset="utf-8"/><meta content="width=device-width, initial-scale=1" name="viewport"/>
+<title>AI — Chapter 1: Theory of Language Models</title>
+<link href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css" rel="stylesheet"/>
+<script defer="" src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"></script>
+<script defer="" onload="renderMathInElement(document.body,{delimiters:[{left:'$$',right:'$$',display:true},{left:'$',right:'$',display:false},{left:'\\(',right:'\\)',display:false},{left:'\\[',right:'\\]',display:true}],throwOnError:false});" src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js"></script>
+<style>
+:root{--bg:#070b14;--fg:#e5e7eb;--muted:#9ca3af;--accent:#7dd3fc;--green:#86efac;--surface:#1f2937;--panel:#111827;--border:#374151;--title:#151d2e}
+*{box-sizing:border-box} body{font-family:"Segoe UI",system-ui,sans-serif;background:var(--bg);color:var(--fg);line-height:1.6;max-width:1800px;margin:0 auto;padding:28px 20px 70px}
+.tiny{font-size:12px}
+h1{color:var(--green);font-size:1.65rem;border-bottom:1px solid var(--surface);padding-bottom:10px}h2{color:var(--accent);font-size:1.15rem;margin-top:1.1em}h3{color:#fde68a;font-size:1rem}
+p,li{color:var(--fg)}.muted,.small{color:var(--muted);font-size:.9rem}.box{background:#111827;border:1px solid var(--surface);border-radius:10px;padding:14px 18px;margin:14px 0}.box strong{color:#fde68a}
+code{background:var(--surface);padding:2px 5px;border-radius:4px;overflow-wrap:anywhere}.paired-row{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:22px;align-items:start;margin:20px 0 30px}.theory-cell,.calc-cell{min-width:0;padding:18px;border:1px solid #374151;border-radius:12px;background:#111827;overflow-wrap:anywhere}.theory-cell{background:#151d2e}.calc{background:#111827;border:1px solid #374151;border-radius:8px;padding:10px 12px;margin:10px 0;font-size:.88rem;overflow-x:hidden;min-width:0}.calc p{margin:.4em 0}.calc table{font-size:.8rem;border-collapse:collapse;width:100%}.calc th,.calc td{border:1px solid var(--surface);padding:5px;text-align:left}.calc th{color:var(--accent)}.matrix{white-space:pre-wrap;font-family:ui-monospace,Consolas,monospace;line-height:1.5}.chapter-title{margin-top:2.5em}.terms h2{margin-top:0}.katex-display{max-width:100%;overflow-x:auto;overflow-y:hidden;padding-bottom:3px}.katex-display>.katex{max-width:100%}
+@media(max-width:900px){.paired-row{grid-template-columns:1fr}body{padding:16px 10px}}
+
+.language-switch{position:fixed;top:14px;right:14px;z-index:10000;display:flex;align-items:center;gap:8px;padding:9px 12px;background:rgba(32,32,51,.97);border:1px solid #4b5563;border-radius:10px;box-shadow:0 5px 18px rgba(0,0,0,.3);color:var(--fg);font-size:.85rem}
+.language-switch select{background:#1f2937;color:inherit;border:1px solid #4b5563;border-radius:6px;padding:6px 8px}
+@media(max-width:600px){.language-switch{top:10px;right:12px;padding:6px 8px;font-size:.78rem}.language-switch select{padding:5px}}
+.view-switch{position:fixed;right:14px;top:50%;transform:translateY(-50%);z-index:9999;display:flex;flex-direction:column;align-items:stretch;gap:8px;width:190px;margin:0;padding:12px;border:1px solid #4b5563;border-radius:12px;background:rgba(32,32,51,.97);box-shadow:0 8px 28px rgba(0,0,0,.4);backdrop-filter:blur(8px)}.view-switch strong{font-size:.88rem;line-height:1.3}.view-switch button{border:1px solid #4b5563;border-radius:8px;padding:9px 10px;background:#1f2937;color:inherit;cursor:pointer;font-weight:600;text-align:left}.view-switch button[aria-pressed="true"]{background:#7771d1;color:white;border-color:#a5b4fc}.view-switch .hint{font-size:.78rem;line-height:1.35;opacity:.85}@media(min-width:1201px){body{padding-right:220px}}@media(max-width:1200px){.view-switch{top:auto;bottom:12px;right:12px;transform:none;width:auto;max-width:calc(100vw - 24px);flex-direction:row;align-items:center;padding:8px;gap:6px}.view-switch strong,.view-switch .hint{display:none}.view-switch button{font-size:.82rem;padding:8px 10px;text-align:center}}.calc-view,.code-view{min-width:0}.code-view{display:none}.code-view pre{white-space:pre-wrap;overflow-wrap:anywhere;word-break:normal;overflow-x:hidden;overflow-y:visible;max-width:100%;background:#070b14;color:#d9e3f0;padding:14px;border-radius:9px;border:1px solid #374151;font-size:.82rem;line-height:1.5}.code-view .code-note{font-size:.9rem;opacity:.85}.code-view h3{font-size:1rem;margin:1em 0 .4em}
+
+/* Spójny wygląd pasków przewijania; przewijanie pozostaje dostępne tam, gdzie jest potrzebne. */
+html{scrollbar-color:#4b5563 #111827;scrollbar-width:thin}
+*{scrollbar-width:thin;scrollbar-color:#4b5563 #111827}
+*::-webkit-scrollbar{width:9px;height:9px}
+*::-webkit-scrollbar-track{background:#111827;border-radius:999px}
+*::-webkit-scrollbar-thumb{background:#4b5563;border:2px solid #111827;border-radius:999px}
+*::-webkit-scrollbar-thumb:hover{background:#7dd3fc}
+/* Mniej wewnętrznych pasków: kod zawija długie linie, a przewijanie poziome zostaje głównie dla bardzo szerokich wzorów. */
+.calc table{table-layout:fixed;overflow-wrap:anywhere;word-break:normal}
+.calc th,.calc td{overflow-wrap:anywhere;min-width:0}
+@media(max-width:600px){.theory-cell,.calc-cell{padding:12px}.calc{padding:8px;font-size:.82rem}.katex{font-size:.94em}.code-view pre{font-size:.76rem;padding:10px}}
+</style>
+<style>
+.formula-explanation{margin:18px 0 8px;padding:16px 18px;border:1px solid #374151;border-left:4px solid #7dd3fc;border-radius:9px;background:rgba(17,24,39,.85)}
+.formula-explanation h3{margin-top:.2em;color:#7dd3fc}
+.formula-explanation p,.formula-explanation li{line-height:1.8}
+.formula-explanation .definition{margin-top:14px}
+</style>
+</head><body>
+<div class="language-switch" aria-label="Wybór języka">
+<label for="languageSelect">Language</label>
+<select id="languageSelect" aria-label="Choose language">
+<option value="pl">Polski</option>
+<option value="en" selected>English</option>
+</select>
+</div>
+<p class="tiny">Onejra</p>
+<h1>AI - Chapter 1 - Theory</h1>
+<h2 style="color:var(--green);font-size:1.25rem;margin-top:0.3em;border:none;padding:0">Jak działają modele językowe? — teoria i obliczenia</h2>
+<p class="muted">Celem tego materiału jest szczegółowe, a zarazem przystępne wyjaśnienie, jak działają modele językowe: w jaki sposób zamieniają tekst na liczby, jak budują reprezentacje kontekstu, jak obliczają prawdopodobieństwa kolejnych elementów sekwencji i jak na podstawie błędu predykcji aktualizują swoje parametry. Kolejne części prowadzą od podstawowych pojęć, oznaczeń i wzorów aż do konkretnych obliczeń wykonywanych wewnątrz uproszczonej sieci neuronowej, tak aby każdy etap dało się prześledzić ręcznie na małym przykładzie.</p><div class="box">
+<strong>Oznaczenia używane w całym materiale.</strong><br/>
+$V$ — rozmiar słownika (liczba unikalnych znaków rozpoznawanych przez model),<br/>
+$T$ — długość okna kontekstu, czyli liczba znaków, które model widzi jednocześnie,<br/>
+$d$ — $d_{\mathrm{model}}$, wymiar wewnętrznej reprezentacji,<br/>
+$d_h$ — $d_{\mathrm{hidden}}$, wymiar warstwy ukrytej MLP,<br/>
+$\eta$ — współczynnik uczenia (wielkość kroku aktualizacji parametrów).<br/>
+Indeksy pozycji w oknie: $t=0,\ldots,T-1$.<br/>
+Indeksy składowych wektora: $k=0,\ldots,d-1$.
+</div><hr/>
+<div class="terms box">
+<h2>Wstęp — słownik pojęć</h2>
+<p>
+<b>Tokenizacja:</b> zamiana surowego tekstu na ciąg identyfikatorów (tu: pojedynczych znaków), które program może indeksować w tablicach.<br/>
+<b>Osadzenie (embedding):</b> uczony wektor liczb rzeczywistych przypisany danemu znakowi; sam identyfikator jest tylko adresem, a znaczenie niesie wektor.<br/>
+<b>Waga:</b> uczalny parametr macierzy, który trening stopniowo dostosowuje.<br/>
+<b>Wyraz wolny (bias):</b> dodatkowa wartość przesunięcia dodawana do wyniku transformacji liniowej.<br/>
+<br/>
+<b>Zapytanie (Query, Q):</b> wektor opisujący, jakich informacji bieżąca pozycja „pyta” w kontekście.<br/>
+<b>Klucz (Key, K):</b> wektor, z którym Query jest porównywane, aby ocenić dopasowanie.<br/>
+<b>Wartość (Value, V):</b> informacja, która po obliczeniu wag uwagi jest przekazywana dalej.<br/>
+<b>Mechanizm uwagi (attention):</b> mechanizm, który na podstawie Q i K wylicza, w jakim stopniu bieżąca pozycja powinna korzystać z wcześniejszych (i bieżącej) pozycji.<br/>
+<br/>
+<b>Logit:</b> surowa, nienormalizowana ocena przypisana kandydatowi ze słownika.<br/>
+<b>Softmax:</b> przekształca wektor logitów w rozkład prawdopodobieństwa (wartości nieujemne, suma równa 1).<br/>
+<b>Strata:</b> skalarny pomiar błędu predykcji względem prawdziwego celu.<br/>
+<b>Gradient:</b> informuje, jak lokalnie zmieni się strata po drobnej zmianie parametru.<br/>
+<b>SGD:</b> prosta reguła aktualizacji: parametr jest przesuwany w kierunku przeciwnym do gradientu, ze współczynnikiem uczenia $\eta$.<br/>
+
+</p>
+</div>
+<h1 class="chapter-title">Rozdział 1 — przejście w przód: co model liczy krok po kroku</h1>
+<p>W każdym wierszu teoria po lewej i odpowiadający jej przykład liczbowy po prawej zaczynają się na tej samej wysokości, dzięki czemu wzór i konkretne liczby można czytać równolegle. Przykład używa krótkiego kontekstu „kot ” oraz celu „p” wziętego ze zdania „kot patrzy”: model dostaje cztery znaki wejścia i ma przewidzieć znak, który następuje zaraz po nich.</p><div aria-label="Widok prawej kolumny" class="view-switch" role="group"><strong>Prawa kolumna:</strong><button aria-pressed="true" class="view-mode" data-mode="calc" type="button">Wyniki obliczeń</button><button aria-pressed="false" class="view-mode" data-mode="code" type="button">Kod C</button><span class="hint">Przełącz widok bez zmiany teorii po lewej.</span></div>
+<div class="paired-row"><section class="theory-cell"><h2>1. Tokenizacja</h2>
+<p>
+Tekst traktujemy jako ciąg znaków. Zanim sieć neuronowa cokolwiek policzy, każdy znak musi dostać stabilny identyfikator liczbowy. Słownik $\mathcal{V}=\{c_0,\ldots,c_{V-1}\}$ to posortowany zbiór wszystkich unikalnych znaków, które model potrafi rozpoznać; $V$ oznacza liczbę elementów tego zbioru.
+Funkcja tokenizacji przypisuje każdemu znakowi jego indeks:
+</p>
+$$
+\mathrm{id}: \mathcal{V} \to \{0,1,\ldots,V-1\}, \qquad
+\mathrm{id}(c_i)=i.
+$$
+<p>
+Jeden przykład treningowy składa się z okna $T$ kolejnych znaków (kontekstu) oraz z celu — znaku, który w danych występuje zaraz po tym oknie:
+</p>
+$$
+\mathbf{s}=(s_0,\ldots,s_{T-1}), \quad
+s_t\in\mathcal{V},
+\qquad
+y\in\mathcal{V}.
+$$
+$$
+u_t=\mathrm{id}(s_t), \qquad y^{\mathrm{id}}=\mathrm{id}(y).
+$$
+
+<div class="formula-explanation" data-extra-explanation="true"><div data-lang-content="pl"><h3>Jak czytać te oznaczenia?</h3>
+<p><strong>Υ (słownik)</strong> jest zbiorem wszystkich znaków, które model może rozpoznać. Symbol \(V\) oznacza liczbę elementów tego zbioru, a nie sam zbiór. Indeks \(i\) biegnie od \(0\) do \(V-1\), dlatego ostatni poprawny identyfikator to \(V-1\). Zapis \(\{c_0,\ldots,c_{V-1}\}\) oznacza, że każdy znak w słowniku ma własną pozycję i nie ma w nim duplikatów.</p>
+<p>Funkcja \(\mathrm{id}\) przypisuje znakowi liczbę całkowitą. Strzałka \(	o\) oznacza, że funkcja przyjmuje element ze zbioru po lewej i zwraca element ze zbioru po prawej. Równość \(\mathrm{id}(c_i)=i\) mówi, że znak \(c_i\) otrzymuje identyfikator \(i\). To kodowanie nie jest jeszcze uczeniem: jest jedynie sposobem zapisania tekstu w postaci, którą program może indeksować.</p>
+<p>Wektor \(\mathbf{s}=(s_0,\ldots,s_{T-1})\) to okno wejściowe zawierające dokładnie \(T\) znaków. Indeks zaczyna się od zera, więc ostatni znak ma indeks \(T-1\). Warunek \(s_t\in\mathcal{V}\) oznacza, że każdy znak wejściowy musi należeć do słownika. \(y\) jest osobnym znakiem docelowym — tym, który występuje po oknie w danych treningowych.</p>
+<p>W ostatnim wzorze \(u_t\) to numeryczna reprezentacja znaku \(s_t\), natomiast \(y^{\mathrm{id}}\) to identyfikator celu. Indeks górny „id” jest tu etykietą, nie potęgowaniem. Model dostaje identyfikatory wejściowe, a podczas treningu porównuje swoje przewidywanie z identyfikatorem prawidłowego znaku. Dla przykładu „kot p” oknem może być „kot ”, a celem znak „p”.</p>
+<div class="definition warning"><strong>Na co uważać?</strong> \(T\) to długość okna, \(V\) to rozmiar słownika, a \(y\) to znak celu. Nie należy ich mylić: \(T\) nie jest liczbą możliwych znaków, a \(V\) nie jest długością zdania. W tym przykładzie tokenem jest pojedynczy znak; inne modele mogą tokenizować tekst na fragmenty słów.</div></div><div data-lang-content="en" hidden><h3>How should these symbols be read?</h3>
+<p><strong>Υ (the vocabulary)</strong> is the set of all characters the model can recognize. \(V\) is the number of elements in that set, not the set itself. The index \(i\) ranges from \(0\) to \(V-1\), so the last valid ID is \(V-1\). The notation \(\{c_0,\ldots,c_{V-1}\}\) means that each vocabulary character has its own position and there are no duplicates.</p>
+<p>The function \(\mathrm{id}\) maps a character to an integer. The arrow \(	o\) means that the function accepts an element from the set on the left and returns an element from the set on the right. The equality \(\mathrm{id}(c_i)=i\) says that character \(c_i\) receives ID \(i\). This encoding is not learning; it is simply a way to represent text so the program can index it.</p>
+<p>The vector \(\mathbf{s}=(s_0,\ldots,s_{T-1})\) is an input window containing exactly \(T\) characters. Indexing starts at zero, so the last character has index \(T-1\). The condition \(s_t\in\mathcal{V}\) means every input character must belong to the vocabulary. \(y\) is a separate target character: the character that follows the window in the training data.</p>
+<p>In the final equation, \(u_t\) is the numeric representation of input character \(s_t\), while \(y^{\mathrm{id}}\) is the target ID. The superscript “id” is a label, not an exponent. The model receives input IDs and, during training, compares its prediction with the ID of the correct character. For example, in “kot p”, the input window can be “kot ” and the target is “p”.</p>
+<div class="definition warning"><strong>Common source of confusion:</strong> \(T\) is the window length, \(V\) is the vocabulary size, and \(y\) is the target character. Do not confuse them: \(T\) is not the number of possible characters, and \(V\) is not the sentence length. In this example, each token is a single character; other models may tokenize text into word fragments.</div></div></div><hr/>
+</section><section class="calc-cell"><h2>1. Tokenizacja i cel</h2><div class="calc-view"><div class="calc" id="tok"></div></div><div class="code-view"><h3>Tokenizacja i cel</h3><pre><code class="language-c">// Tekst wejściowy i znak, którego model ma się nauczyć przewidywać.
+char input[] = {'k', 'o', 't', ' '};
+char target = 'p';
+
+// Przykładowe mapowanie znak -&gt; ID (w prawdziwym programie
+// zwykle przechowuje się je w tablicy lub słowniku).
+int ids[4] = {ID_K, ID_O, ID_T, ID_SPACE};
+int target_id = ID_P;
+int T = 4;</code></pre><p class="code-note">Fragment w C pokazuje jawnie cztery znaki wejścia oraz identyfikator znaku docelowego. Symbole w stylu ID_K, ID_O itd. oznaczają indeksy ustalone przez słownik znaków; w pełnym programie mapowanie znak→ID trzyma się zwykle w tablicy lub strukturze asocjacyjnej.</p></div></section></div><div class="paired-row"><section class="theory-cell"><h2>2. Parametry modelu (wagi)</h2>
+
+<p>Poniżej wymienione są wszystkie uczalne tensory modelu. Każdy z nich jest inicjalizowany niezależnie z rozkładu jednostajnego o małym zakresie, a następnie aktualizowany podczas treningu:</p>
+$$
+\begin{align*}
+E &amp;\in \mathbb{R}^{V\times d}
+  &amp;&amp; \text{embedding znaku,} \\
+P &amp;\in \mathbb{R}^{T\times d}
+  &amp;&amp; \text{embedding pozycji,} \\
+W_Q,W_K,W_V,W_O &amp;\in \mathbb{R}^{d\times d}
+  &amp;&amp; \text{projekcje attention,} \\
+W_1 &amp;\in \mathbb{R}^{d\times d_h},
+\quad
+\mathbf{b}_1\in\mathbb{R}^{d_h}
+  &amp;&amp; \text{MLP warstwa 1,} \\
+W_2 &amp;\in \mathbb{R}^{d_h\times d},
+\quad
+\mathbf{b}_2\in\mathbb{R}^{d}
+  &amp;&amp; \text{MLP warstwa 2,} \\
+W_{\mathrm{out}} &amp;\in \mathbb{R}^{d\times V},
+\quad
+\mathbf{b}_{\mathrm{out}}\in\mathbb{R}^{V}
+  &amp;&amp; \text{głowa wyjściowa.}
+\end{align*}
+$$
+
+<h3>2.1. Inicjalizacja</h3>
+$$
+\begin{align*}
+E_{ij},\; P_{tj},\; (W_*)_{ij}
+&amp;\sim \mathcal{U}(-0{,}15,\;0{,}15), \\
+(\mathbf{b}_*)_j
+&amp;\sim \mathcal{U}(-0{,}05,\;0{,}05).
+\end{align*}
+$$
+<p class="muted">
+Konkretne liczby typu $E[\,$„a”$\,]=[0{,}11,\,0{,}12,\,-0{,}13]$ to po prostu odczyt wiersza tablicy $E$ o indeksie $\mathrm{id}($„a”$)$ — nie wynik „z kształtu litery” ani ręcznie zaprojektowanej reguły. Liczba składowych każdego takiego wiersza to zawsze $d=d_{\mathrm{model}}$; w demonstracji $d=3$, więc każdy wektor osadzenia ma trzy liczby.
+</p>
+<div class="box"><strong>Losowość a determinizm — ważne rozróżnienie</strong><p>Wagi startowe trzeba jakoś wypełnić liczbami. W praktyce używa się do tego generatora pseudolosowego (np. <code>rand()</code>), ale sam fakt losowania nie oznacza, że późniejsze obliczenia są niepowtarzalne.</p><ul><li><b>Generator z ustalonym seedem:</b> przy tym samym ziarnie i tej samej kolejności wywołań zawsze produkuje tę samą sekwencję liczb, więc wagi startowe są odtwarzalne.</li><li><b>Generator bez ustalonego ziarna</b> może przy kolejnym uruchomieniu dać inne wagi początkowe.</li><li><b>Po inicjalizacji:</b> gdy wagi, dane i kolejność operacji są już ustalone, forward pass w typowej implementacji sekwencyjnej jest deterministyczny. Drobne różnice mogą pojawić się przy równoległych operacjach lub na różnym sprzęcie.</li></ul><p>W tym przykładzie generator ma jawne ziarno <code>seed=20261016</code>, dlatego demonstracyjne macierze są powtarzalne między uruchomieniami.</p></div>
+<div class="formula-explanation" data-extra-explanation="true"><div data-lang-content="pl"><h3>Co oznaczają parametry i indeksy?</h3>
+<p>Wagi są liczbami, które model dostosowuje podczas treningu. Zapis \(W^{(E)}\) oznacza macierz wag przypisaną do embeddingów, a indeksy w nawiasach kwadratowych wskazują konkretny element tej macierzy. Wektor lub macierz nie jest pojedynczą liczbą: ma określoną liczbę wierszy i kolumn, a każdy element może być aktualizowany.</p>
+<p>Jeżeli \(d_{\mathrm{model}}=3\), każdy embedding ma trzy składowe. Dla \(V\) znaków tablica embeddingów ma zwykle \(V\) wierszy i \(d_{\mathrm{model}}\) kolumn, czyli kształt \(V\times d_{\mathrm{model}}\). Wybranie identyfikatora \(u_t\) oznacza pobranie odpowiedniego wiersza. To operacja indeksowania, nie mnożenie przez sam identyfikator.</p>
+<p>Parametry początkowe są zwykle inicjalizowane małymi wartościami. Na początku nie muszą mieć sensownej interpretacji językowej; dopiero kolejne aktualizacje podczas treningu dostosowują je do przewidywania danych.</p></div><div data-lang-content="en" hidden><h3>What do parameters and indices mean?</h3>
+<p>Weights are numeric values adjusted during training. The notation \(W^{(E)}\) denotes the weight matrix associated with embeddings, while square-bracket indices identify a particular matrix element. A vector or matrix is not a single number: it has a specific number of rows and columns, and each element may be updated.</p>
+<p>If \(d_{\mathrm{model}}=3\), each embedding has three components. For a vocabulary of \(V\) characters, the embedding table usually has \(V\) rows and \(d_{\mathrm{model}}\) columns, giving shape \(V\times d_{\mathrm{model}}\). Selecting ID \(u_t\) means retrieving the corresponding row. This is indexing, not multiplication by the ID itself.</p>
+<p>Initial parameters are usually initialized with small values. They do not need to have a meaningful linguistic interpretation at first; successive training updates adapt them to the prediction task.</p></div></div><hr/>
+</section><section class="calc-cell"><h2>2. Parametry przykładu</h2><div class="calc-view"><div class="calc" id="params"></div></div><div class="code-view"><h3>Inicjalizacja parametrów</h3><pre><code class="language-c">// Generator pseudolosowy z ustalonym ziarnem.
+// Te same seed + ta sama kolejność wywołań =&gt; te same wagi.
+unsigned int seed = 20261016;
+float rand01(void) {
+    seed = seed * 1664525u + 1013904223u;
+    return (float)seed / 4294967296.0f;
+}
+float random_weight(void) {
+    return (2.0f * rand01() - 1.0f) * 0.15f;
+}
+
+// Przykład: każda komórka macierzy E dostaje wagę.
+for (int i = 0; i &lt; VOCAB_SIZE; ++i)
+    for (int j = 0; j &lt; D_MODEL; ++j)
+        E[i][j] = random_weight();</code></pre><p class="code-note">To uproszczony kod inicjalizacji z ustalonym ziarnem. Macierz pozycji P oraz pozostałe wagi są wypełniane podobnymi pętlami po wierszach i kolumnach; późniejszy trening (SGD) może zmienić każdą z tych wartości.</p></div></section></div><div class="paired-row"><section class="theory-cell"><h2>3. Embedding + pozycja</h2>
+<p>Dla każdej pozycji $t=0,\ldots,T-1$ budujemy reprezentację wejściową jako sumę wektora osadzenia znaku i wektora osadzenia pozycji:</p>
+$$
+\mathbf{x}_t = E_{u_t,:} + P_{t,:} \in \mathbb{R}^{d},
+$$
+<p>To samo równanie zapisane składowo (dla każdej współrzędnej wektora osobno):</p>
+$$
+x_{t,k} = E_{u_t,\,k} + P_{t,\,k}, \qquad k=0,\ldots,d-1.
+$$
+
+<div class="formula-explanation" data-extra-explanation="true"><div data-lang-content="pl"><h3>Dlaczego embedding i pozycja są dodawane?</h3>
+<p>Identyfikator znaku jest liczbą całkowitą, ale warstwy transformera potrzebują wektora liczb rzeczywistych. Tablica embeddingów zamienia więc identyfikator na \(e_t\), czyli wektor długości \(d_{\mathrm{model}}\). Każda składowa tego wektora jest uczona i może kodować cechy przydatne dla zadania.</p>
+<p>Wektor pozycyjny \(p_t\) wnosi informację o miejscu znaku w oknie. Bez niego reprezentacje identycznego znaku na różnych pozycjach mogłyby być nierozróżnialne na wejściu. Równanie \(h_t^{(0)}=e_t+p_t\) oznacza dodawanie składowa po składowej: pierwszą składową embeddingu dodaje się do pierwszej składowej pozycji itd. Wektory muszą więc mieć taki sam wymiar.</p>
+<p>Indeks \(t\) oznacza pozycję w sekwencji, a \((0)\) oznacza etap początkowy przed blokiem transformera. Nie jest to potęgowanie. Wynik \(h_t^{(0)}\) jest wejściową reprezentacją, którą kolejne warstwy będą przekształcać.</p></div><div data-lang-content="en" hidden><h3>Why are the embedding and position added?</h3>
+<p>A character ID is an integer, but transformer layers need a real-valued vector. The embedding table therefore maps the ID to \(e_t\), a vector of length \(d_{\mathrm{model}}\). Each component is learned and can encode features useful for the task.</p>
+<p>The positional vector \(p_t\) contributes information about the character's location in the window. Without it, identical characters at different positions could have indistinguishable input representations. The equation \(h_t^{(0)}=e_t+p_t\) means component-wise addition: the first embedding component is added to the first positional component, and so on. The vectors must therefore have the same dimension.</p>
+<p>The index \(t\) denotes sequence position, and \((0)\) denotes the initial stage before the transformer block. It is not an exponent. The result \(h_t^{(0)}\) is the input representation that subsequent layers will transform.</p></div></div><hr/>
+</section><section class="calc-cell"><h2>3. Embedding + pozycja</h2><div class="calc-view"><div class="calc" id="emb"></div></div><div class="code-view"><h3>Embedding znaku + pozycja</h3><pre><code class="language-c">// Dla pozycji t pobierz wektor znaku E[id] i wektor pozycji P[t].
+for (int j = 0; j &lt; D_MODEL; ++j) {
+    X[t][j] = E[ids[t]][j] + P[t][j];
+}
+
+// Przykład dla 'k' na pozycji 0:
+// X[0][j] = E[ID_K][j] + P[0][j];</code></pre><p class="code-note">Tablica P ma dokładnie jeden wiersz na każdą pozycję w oknie. Każdy wiersz zawiera D_MODEL liczb rzeczywistych; dodawanie embeddingu znaku i pozycji odbywa się składowa po składowej, bez mnożenia.</p></div></section></div><div class="paired-row"><section class="theory-cell"><h2>4. Projekcje Query / Key / Value</h2>
+$$
+\mathbf{q}_t = \mathbf{x}_t^\top W_Q, \qquad
+\mathbf{k}_t = \mathbf{x}_t^\top W_K, \qquad
+\mathbf{v}_t = \mathbf{x}_t^\top W_V.
+$$
+<p>
+W notacji używanej w programie wagi są indeksowane tak, że składowa $j$ wektora wynikowego powstaje jako iloczyn skalarny wektora $\mathbf{x}_t$ z $j$-tą kolumną odpowiedniej macierzy projekcji. Innymi słowy: każda kolumna $W_Q$ (oraz analogicznie $W_K$, $W_V$) definiuje jedną składową Query, Key albo Value:
+</p>
+$$
+q_{t,j} = \sum_{k=0}^{d-1} x_{t,k}\,(W_Q)_{k j}
+\quad\text{(analogicznie dla }K,V\text{)}.
+$$
+
+<div class="formula-explanation" data-extra-explanation="true"><div data-lang-content="pl"><h3>Dlaczego potrzebne są trzy projekcje?</h3>
+<p>Każda projekcja jest osobną transformacją liniową tej samej reprezentacji wejściowej. \(W_Q\), \(W_K\) i \(W_V\) nie muszą mieć tych samych wartości, ponieważ są uczone do różnych ról. Query służy do zadania pytania o kontekst, Key do obliczania dopasowania, a Value zawiera informację, która zostanie zebrana po obliczeniu wag uwagi.</p>
+<p>W zapisie \(q_t=W_Qh_t\) wymiar wektora wynikowego zależy od liczby wierszy \(W_Q\), a liczba kolumn tej macierzy musi odpowiadać wymiarowi \(h_t\). Analogiczne zasady dotyczą \(k_t\) i \(v_t\). Bias może występować w implementacji, nawet jeśli został pominięty w skróconym wzorze.</p>
+<p>Te wektory nie są jeszcze odpowiedzią modelu. Są pośrednimi reprezentacjami używanymi przez attention. Dopiero po porównaniu Query z Key i połączeniu Value powstaje wynik uwagi.</p></div><div data-lang-content="en" hidden><h3>Why are three projections needed?</h3>
+<p>Each projection is a separate linear transformation of the same input representation. \(W_Q\), \(W_K\), and \(W_V\) need not have the same values because they learn different roles. Query asks for relevant context, Key is used to calculate matches, and Value carries the information collected after attention weights are computed.</p>
+<p>In \(q_t=W_Qh_t\), the output-vector dimension is determined by the number of rows in \(W_Q\), while the matrix's number of columns must match the dimension of \(h_t\). The same rules apply to \(k_t\) and \(v_t\). An implementation may also include a bias even when it is omitted from a compact equation.</p>
+<p>These vectors are not yet the model's answer. They are intermediate representations used by attention. The attention output is produced only after Query is compared with Key and the Value vectors are combined.</p></div></div><hr/>
+</section><section class="calc-cell"><h2>4. Query, Key, Value</h2><div class="calc-view"><div class="calc" id="qkv"></div></div><div class="code-view"><h3>Projekcje Q, K, V</h3><pre><code class="language-c">// Mnożenie wektora X[t] przez macierze WQ, WK, WV.
+for (int j = 0; j &lt; D_MODEL; ++j) {
+    Q[t][j] = 0.0f;
+    K[t][j] = 0.0f;
+    V[t][j] = 0.0f;
+    for (int k = 0; k &lt; D_MODEL; ++k) {
+        Q[t][j] += X[t][k] * WQ[k][j];
+        K[t][j] += X[t][k] * WK[k][j];
+        V[t][j] += X[t][k] * WV[k][j];
+    }
+}</code></pre><p class="code-note">Trzy zagnieżdżone pętle liczą trzy osobne projekcje liniowe. Wektory Q, K i V to zwykłe tablice liczb zmiennoprzecinkowych; powstają przez mnożenie wektora wejściowego przez odpowiednią macierz wag.</p></div></section></div><div class="paired-row"><section class="theory-cell"><h2>5. Causal self-attention (jedna głowa)</h2>
+<h3>5.1. Score</h3>
+<p>Dla zapytania (query) na pozycji $i$ model wolno porównywać wyłącznie z kluczami pozycji $j\le i$. To tak zwana maska przyczynowa: przyszłe znaki są niedostępne, tak jak w rzeczywistym przewidywaniu kolejnego elementu sekwencji:</p>
+$$
+\mathrm{score}_{i j}
+=
+\frac{\mathbf{q}_i\cdot\mathbf{k}_j}{\sqrt{d}}
+=
+\frac{1}{\sqrt{d}}\sum_{k=0}^{d-1} q_{i,k}\,k_{j,k},
+\qquad
+0\le j\le i.
+$$
+
+<h3>5.2. Softmax → wagi uwagi</h3>
+$$
+\alpha_{i j}
+=
+\frac{
+\exp\bigl(\mathrm{score}_{i j}-\max_{j'\le i}\mathrm{score}_{i j'}\bigr)
+}{
+\sum_{j'=0}^{i}
+\exp\bigl(\mathrm{score}_{i j'}-\max_{j''\le i}\mathrm{score}_{i j''}\bigr)
+},
+\qquad
+\sum_{j=0}^{i}\alpha_{i j}=1.
+$$
+<p class="muted">Odejmowanie maksimum od wszystkich score’ów przed policzeniem wykładników to standardowa stabilizacja numeryczna: zapobiega przepełnieniu przy dużych wartościach. Matematycznie wynik softmaxu się przez to nie zmienia, bo ten sam czynnik kasuje się w liczniku i mianowniku.</p>
+<h3>5.3. Agregacja wartości i projekcja wyjścia</h3>
+$$
+\mathbf{z}_i=\sum_{j=0}^{i}\alpha_{i j}\,\mathbf{v}_j \in\mathbb{R}^{d},
+$$
+$$
+\mathrm{proj}_i=\mathbf{z}_i^\top W_O,
+\qquad
+\mathrm{proj}_{i,\ell}=\sum_{k=0}^{d-1} z_{i,k}\,(W_O)_{k\ell}.
+$$
+
+<h3>5.4. Residual</h3>
+$$
+\mathbf{h}_i=\mathbf{x}_i+\mathrm{proj}_i.
+$$
+
+<div class="formula-explanation" data-extra-explanation="true"><div data-lang-content="pl"><h3>Od wyniku dopasowania do wektora kontekstu</h3>
+<p>Iloczyn skalarny \(q_t^\top k_j\) mnoży składowe obu wektorów parami i sumuje wyniki. Ocenia w ten sposób zgodność zapytania pozycji \(t\) z kluczem pozycji \(j\). Dzielenie przez \(\sqrt{d_k}\) skaluje wartości, gdzie \(d_k\) jest liczbą składowych Query/Key. Nie jest to normalizacja do sumy 1 — tę rolę pełni dopiero softmax.</p>
+<p>Maska przyczynowa wymusza warunek \(j\le t\): pozycja \(t\) może korzystać z siebie i z przeszłości, ale nie z przyszłych znaków. To konieczne, aby trening symulował rzeczywiste przewidywanie kolejnego znaku, kiedy przyszłość nie jest jeszcze znana.</p>
+<p>Softmax przekształca wyniki dopasowania w wagi \(\alpha_{tj}\). Każda waga jest nieujemna, a suma wag po dozwolonych pozycjach wynosi 1. Wreszcie \(z_t=\sum_{j\le t}\alpha_{tj}v_j\) tworzy średnią ważoną wektorów Value. Duża waga oznacza większy udział danej pozycji w wyniku, ale nie oznacza automatycznie, że ta pozycja jest semantycznie „najważniejsza” w każdym sensie.</p></div><div data-lang-content="en" hidden><h3>From a matching score to a context vector</h3>
+<p>The dot product \(q_t^\top k_j\) multiplies corresponding vector components and sums the products. It measures how well the query at position \(t\) matches the key at position \(j\). Division by \(\sqrt{d_k}\) rescales the values, where \(d_k\) is the number of Query/Key components. This is not normalization to a sum of 1; that is the role of softmax.</p>
+<p>The causal mask enforces \(j\le t\): position \(t\) may use itself and the past, but not future characters. This is necessary for training to simulate genuine next-character prediction, where the future is not yet known.</p>
+<p>Softmax converts matching scores into weights \(\alpha_{tj}\). Each weight is non-negative, and the weights over allowed positions sum to 1. Finally, \(z_t=\sum_{j\le t}\alpha_{tj}v_j\) forms a weighted average of Value vectors. A larger weight gives a position a larger contribution, but does not automatically mean that position is semantically “most important” in every sense.</p></div></div><hr/>
+</section><section class="calc-cell"><h2>5. Causal self-attention</h2><div class="calc-view"><div class="calc" id="attn"></div></div><div class="code-view"><h3>Causal self-attention</h3><pre><code class="language-c">// Pozycja i może patrzeć tylko na pozycje j &lt;= i.
+for (int i = 0; i &lt; T; ++i) {
+    float scores[T];
+    for (int j = 0; j &lt;= i; ++j)
+        scores[j] = dot(Q[i], K[j]) / sqrtf(D_MODEL);
+
+    // Softmax wyłącznie dla dozwolonych pozycji 0..i.
+    softmax(scores, i + 1, alpha);
+    for (int k = 0; k &lt; D_MODEL; ++k) {
+        Z[i][k] = 0.0f;
+        for (int j = 0; j &lt;= i; ++j)
+            Z[i][k] += alpha[j] * V[j][k];
+    }
+    // Projekcja i połączenie rezydualne.
+    H[i] = X[i] + matvec(Z[i], WO);
+}</code></pre><p class="code-note">Maska przyczynowa jest widoczna wprost w warunku <code>j &lt;= i</code>: pozycja i sumuje wkłady wyłącznie z pozycji od 0 do i włącznie. Dzięki temu reprezentacja nie korzysta z przyszłych znaków, których w prawdziwym generowaniu jeszcze nie ma.</p></div></section></div><div class="paired-row"><section class="theory-cell"><h2>6. MLP na ostatniej pozycji</h2>
+<p>
+Do predykcji następnego znaku używamy wyłącznie reprezentacji z ostatniej pozycji, $\mathbf{h}_{T-1}$. Dzięki masce przyczynowej ta pozycja „widzi” już cały dostępny kontekst (znaki $0,\ldots,T-1$), więc to naturalne miejsce, z którego model czyta podsumowanie okna i przewiduje znak docelowy.
+</p>
+$$
+\begin{align*}
+\mathbf{p}
+&amp;=
+\mathbf{h}_{T-1}^\top W_1+\mathbf{b}_1
+\in\mathbb{R}^{d_h},
+\\
+\mathbf{m}
+&amp;=
+\tanh(\mathbf{p})
+\quad\text{czyli}\quad
+m_r=\tanh(p_r),
+\\
+\boldsymbol{\mu}
+&amp;=
+\mathbf{m}^\top W_2+\mathbf{b}_2
+\in\mathbb{R}^{d},
+\\
+\mathbf{h}^{\mathrm{final}}
+&amp;=
+\mathbf{h}_{T-1}+\boldsymbol{\mu}.
+\end{align*}
+$$
+
+<div class="formula-explanation" data-extra-explanation="true"><div data-lang-content="pl"><h3>Jak czytać wzór MLP?</h3>
+<p>MLP przetwarza reprezentację po attention, zwykle w dwóch projekcjach liniowych z nieliniowością pomiędzy nimi. \(W_1r_t+b_1\) tworzy reprezentację ukrytą; funkcja aktywacji \(\phi\) działa na każdej składowej osobno; \(W_2\) mapuje ją z powrotem do szerokości modelu. Biasy \(b_1\) i \(b_2\) są dodawane do odpowiednich składowych wyniku warstwy.</p>
+<p>Wymiary muszą pasować: jeśli reprezentacja wejściowa ma \(d_{\mathrm{model}}\) składowych, a warstwa ukryta ma \(d_{\mathrm{hidden}}\), to pierwsza projekcja przekształca \(d_{\mathrm{model}}	o d_{\mathrm{hidden}}\), a druga \(d_{\mathrm{hidden}}	o d_{\mathrm{model}}\). Nieliniowość pozwala sieci tworzyć bardziej złożone przekształcenia niż samo mnożenie przez macierze.</p></div><div data-lang-content="en" hidden><h3>How should the MLP equation be read?</h3>
+<p>The MLP processes the representation after attention, usually using two linear projections with a nonlinearity between them. \(W_1r_t+b_1\) creates a hidden representation; activation \(\phi\) acts on each component; \(W_2\) maps it back to the model width. Biases \(b_1\) and \(b_2\) are added to the corresponding output components.</p>
+<p>Dimensions must match: if the input representation has \(d_{\mathrm{model}}\) components and the hidden layer has \(d_{\mathrm{hidden}}\), the first projection maps \(d_{\mathrm{model}}	o d_{\mathrm{hidden}}\), and the second maps \(d_{\mathrm{hidden}}	o d_{\mathrm{model}}\). The nonlinearity allows more complex transformations than matrix multiplication alone.</p></div></div><hr/>
+</section><section class="calc-cell"><h2>6. MLP na ostatniej pozycji</h2><div class="calc-view"><div class="calc" id="mlp"></div></div><div class="code-view"><h3>Warstwa MLP</h3><pre><code class="language-c">// Uproszczona warstwa MLP dla ostatniej pozycji.
+for (int j = 0; j &lt; D_HIDDEN; ++j) {
+    a[j] = b1[j];
+    for (int k = 0; k &lt; D_MODEL; ++k)
+        a[j] += H[T-1][k] * W1[k][j];
+    m[j] = tanhf(a[j]);
+}
+for (int j = 0; j &lt; D_MODEL; ++j) {
+    mu[j] = b2[j];
+    for (int k = 0; k &lt; D_HIDDEN; ++k)
+        mu[j] += m[k] * W2[k][j];
+    H_final[j] = H[T-1][j] + mu[j];
+}</code></pre><p class="code-note">MLP przekształca wyłącznie reprezentację ostatniej pozycji okna. Funkcja <code>tanhf</code> wprowadza nieliniowość między dwiema warstwami liniowymi; po drugiej warstwie wynik jest dodawany do wejścia MLP (połączenie rezydualne), co stabilizuje przepływ informacji.</p></div></section></div><div class="paired-row"><section class="theory-cell"><h2>7. Logity, softmax, strata</h2>
+$$
+\boldsymbol{\ell}
+=
+\bigl(\mathbf{h}^{\mathrm{final}}\bigr)^\top W_{\mathrm{out}}+\mathbf{b}_{\mathrm{out}}
+\in\mathbb{R}^{V}.
+$$
+$$
+\pi_v
+=
+\frac{
+\exp\bigl(\ell_v-\max_{v'}\ell_{v'}\bigr)
+}{
+\sum_{v'=0}^{V-1}
+\exp\bigl(\ell_{v'}-\max_{v''}\ell_{v''}\bigr)
+},
+\qquad
+\sum_{v=0}^{V-1}\pi_v=1.
+$$
+<p>Funkcja straty to entropia krzyżowa (cross-entropy) względem prawdziwego celu $y^{\mathrm{id}}$. Im mniejsze prawdopodobieństwo, które model przypisał poprawnemu znakowi, tym większa strata:</p>
+$$
+\mathcal{L}
+=
+-\log\pi_{y^{\mathrm{id}}}.
+$$
+<p>Predykcja (greedy) to indeks znaku o największym prawdopodobieństwie:</p>
+$$
+\hat y=\arg\max_{v}\,\pi_v.
+$$
+
+<div class="formula-explanation" data-extra-explanation="true"><div data-lang-content="pl"><h3>Trzy różne wielkości: logit, prawdopodobieństwo i strata</h3>
+<p>Logit \(\ell_j\) jest surową oceną przypisaną kandydatowi \(j\). Może przyjmować dowolne wartości rzeczywiste i nie musi mieścić się w przedziale od 0 do 1. Softmax oblicza wykładnik każdego logitu i dzieli go przez sumę wykładników wszystkich logitów, dzięki czemu powstaje rozkład prawdopodobieństwa.</p>
+<p>W mianowniku \(\sum_{k=1}^{V}\exp(\ell_k)\) sumujemy po wszystkich \(V\) możliwych symbolach. Indeks \(k\) jest indeksem sumowania; \(j\) oznacza konkretny symbol, którego prawdopodobieństwo liczymy. Po softmaxie wszystkie prawdopodobieństwa są nieujemne, a ich suma wynosi 1.</p>
+<p>W stracie \(\mathcal{L}=-\log p_y\), \(p_y\) oznacza prawdopodobieństwo przypisane poprawnemu symbolowi \(y\). Minus sprawia, że małe prawdopodobieństwo poprawnej odpowiedzi daje dużą dodatnią stratę. Na przykład \(p_y=1\) daje stratę 0, natomiast \(p_y\) bliskie 0 daje bardzo dużą stratę. Strata mierzy jakość przewidywania dla celu, nie jest bezpośrednio prawdopodobieństwem ani oceną całej wiedzy modelu.</p></div><div data-lang-content="en" hidden><h3>Three different quantities: logit, probability, and loss</h3>
+<p>A logit \(\ell_j\) is a raw score assigned to candidate \(j\). It can take any real value and need not lie between 0 and 1. Softmax exponentiates each logit and divides it by the sum of all exponentials, producing a probability distribution.</p>
+<p>In the denominator \(\sum_{k=1}^{V}\exp(\ell_k)\), we sum over all \(V\) possible symbols. The index \(k\) is the summation index; \(j\) denotes the particular symbol whose probability is being calculated. After softmax, all probabilities are non-negative and sum to 1.</p>
+<p>In the loss \(\mathcal{L}=-\log p_y\), \(p_y\) is the probability assigned to the correct symbol \(y\). The minus sign makes a small probability for the correct answer produce a large positive loss. For example, \(p_y=1\) gives loss 0, while \(p_y\) close to 0 gives a very large loss. Loss measures the prediction quality for a target; it is not itself a probability or a rating of the model's overall knowledge.</p></div></div><hr/>
+</section><section class="calc-cell"><h2>7. Logity, softmax i strata</h2><div class="calc-view"><div class="calc" id="out"></div></div><div class="code-view"><h3>Logity, softmax i strata</h3><pre><code class="language-c">// Jeden logit dla każdego znaku słownika.
+for (int v = 0; v &lt; VOCAB_SIZE; ++v) {
+    logits[v] = bout[v];
+    for (int j = 0; j &lt; D_MODEL; ++j)
+        logits[v] += H_final[j] * Wout[j][v];
+}
+softmax(logits, VOCAB_SIZE, probs);
+loss = -logf(probs[target_id]);
+
+// Predykcja: indeks największego prawdopodobieństwa.
+predicted_id = argmax(probs, VOCAB_SIZE);</code></pre><p class="code-note">Softmax zamienia surowe logity na rozkład prawdopodobieństwa po całym słowniku. Strata <code>-log(prawdopodobieństwo poprawnego znaku)</code> jest bliska zeru, gdy model przypisuje celowi wysokie prawdopodobieństwo, i rośnie, gdy to prawdopodobieństwo jest małe.</p></div></section></div>
+<h1 class="chapter-title">Rozdział 2 — od wyniku do wag: obliczenia wstecz</h1>
+<p>W rozdziale 1 wyliczyliśmy pełny wynik modelu (forward pass) oraz wartość straty dla jednego przykładu. Teraz korzystamy dokładnie z tego wyniku: cofamy się od skalarnego błędu przez kolejne operacje, zbieramy gradienty względem parametrów i wykonujemy jeden krok aktualizacji SGD. Dzięki temu widać, w jaki sposób informacja o pomyłce na wyjściu wraca do wag.</p>
+<div class="paired-row">
+<section class="theory-cell"><h2>8. Backward (szkic autogradu)</h2>
+<p>
+W uproszczonym obrazie autogradu budowany jest graf operacji skalarnych: każda liczba pośrednia pamięta, z jakich argumentów powstała. Startujemy od pochodnej straty względem samej siebie:
+</p>
+$$
+\frac{\partial\mathcal{L}}{\partial\mathcal{L}}=1.
+$$
+<p>Lokalne reguły różniczkowania (przykłady najczęściej używanych operacji) pozwalają „przenieść” gradient wstecz przez każdą krawędź grafu:</p>
+$$
+\begin{align*}
+c&amp;=a+b
+&amp;&amp;\Rightarrow&amp;
+\frac{\partial\mathcal{L}}{\partial a}
+&amp;\mathrel{+}=
+\frac{\partial\mathcal{L}}{\partial c},
+&amp;
+\frac{\partial\mathcal{L}}{\partial b}
+&amp;\mathrel{+}=
+\frac{\partial\mathcal{L}}{\partial c},
+\\[4pt]
+c&amp;=a\cdot b
+&amp;&amp;\Rightarrow&amp;
+\frac{\partial\mathcal{L}}{\partial a}
+&amp;\mathrel{+}=
+b\,\frac{\partial\mathcal{L}}{\partial c},
+&amp;
+\frac{\partial\mathcal{L}}{\partial b}
+&amp;\mathrel{+}=
+a\,\frac{\partial\mathcal{L}}{\partial c},
+\\[4pt]
+c&amp;=\tanh(a)
+&amp;&amp;\Rightarrow&amp;
+\frac{\partial\mathcal{L}}{\partial a}
+&amp;\mathrel{+}=
+\bigl(1-\tanh^2(a)\bigr)
+\frac{\partial\mathcal{L}}{\partial c},
+\\[4pt]
+c&amp;=\mathrm{e}^{a}
+&amp;&amp;\Rightarrow&amp;
+\frac{\partial\mathcal{L}}{\partial a}
+&amp;\mathrel{+}=
+\mathrm{e}^{a}\,\frac{\partial\mathcal{L}}{\partial c}
+=
+c\,\frac{\partial\mathcal{L}}{\partial c},
+\\[4pt]
+c&amp;=\log a
+&amp;&amp;\Rightarrow&amp;
+\frac{\partial\mathcal{L}}{\partial a}
+&amp;\mathrel{+}=
+\frac{1}{a}\,\frac{\partial\mathcal{L}}{\partial c}.
+\end{align*}
+$$
+<p>
+Gradienty zbierają się addytywnie w polach $\partial\mathcal{L}/\partial\theta$ dla każdego parametru $\theta\in\{E,P,W_Q,W_K,W_V,W_O,W_1,W_2,W_{\mathrm{out}},\ldots\}$. Gdy ten sam parametr uczestniczy w wielu operacjach, jego wkłady gradientowe są sumowane.
+</p>
+<div class="formula-explanation" data-extra-explanation="true"><div data-lang-content="pl"><h3>Co oznacza „przenoszenie błędu wstecz”?</h3>
+<p>W przejściu w przód model oblicza wynik, a funkcja straty porównuje go z celem. Propagacja wsteczna (backpropagation) oblicza następnie, jak zmiana każdej pośredniej wartości i każdego parametru wpływa na tę stratę. Reguła łańcuchowa łączy pochodne kolejnych operacji: wpływ parametru na wynik, a następnie wpływ wyniku na stratę.</p>
+<p>Pochodna \(\partial\mathcal{L}/\partial	heta\) odpowiada na pytanie: jak lokalnie zmieni się strata, gdy nieznacznie zmienimy parametr \(	heta\), pozostawiając pozostałe parametry bez zmian? Dodatnia pochodna oznacza, że zwiększenie parametru lokalnie zwiększa stratę; ujemna — że ją zmniejsza. Wielkość pochodnej opisuje lokalną wrażliwość, nie gotową wartość aktualizacji.</p>
+<p>Automatyczne różniczkowanie (autograd) nie zgaduje gradientu z dwóch losowych wyników. Śledzi graf operacji i oblicza pochodne zgodnie z regułami różniczkowania. W ten sposób gradienty parametrów wcześniejszych warstw uwzględniają cały łańcuch zależności od parametru do funkcji straty.</p></div><div data-lang-content="en" hidden><h3>What does “propagating the error backward” mean?</h3>
+<p>During the forward pass, the model computes an output and the loss compares it with the target. Backpropagation then calculates how changing each intermediate value and parameter affects that loss. The chain rule combines derivatives of successive operations: how a parameter affects an output, and how that output affects the loss.</p>
+<p>The derivative \(\partial\mathcal{L}/\partial	heta\) answers: how would the loss change locally if parameter \(	heta\) changed slightly while other parameters stayed fixed? A positive derivative means increasing the parameter locally increases loss; a negative derivative means it decreases loss. The magnitude describes local sensitivity, not the final update value.</p>
+<p>Autograd does not guess a gradient from two arbitrary results. It tracks the computation graph and calculates derivatives using differentiation rules. Gradients for earlier layers therefore account for the full chain of dependencies from a parameter to the loss.</p></div></div><hr/>
+<h2>9. Aktualizacja SGD</h2>
+<p>Po zebraniu gradientów wykonujemy jeden krok spadku wzdłuż gradientu. Dla każdego parametru skalarnego $\theta$:</p>
+$$
+\theta \leftarrow \theta - \eta\,\frac{\partial\mathcal{L}}{\partial\theta}.
+$$
+<p>W programie demonstracyjnym współczynnik uczenia wynosi $\eta=0{,}025$. Przed kolejnym przykładem gradienty są zerowane, żeby nie mieszać sygnałów z różnych okien treningowych. W materiale gradienty całego modelu są dodatkowo ilustrowane numerycznie (różnice centralne), co ułatwia sprawdzenie idei bez pełnej implementacji autogradu.</p>
+<hr/>
+</section>
+<section class="calc-cell">
+<h2>2.1. Gradient straty względem logitów</h2>
+<h2>2.2. Gradienty warstwy wyjściowej</h2>
+<h2>2.3. Aktualizacja parametrów całego modelu</h2>
+<div class="calc-view"><div class="calc" id="back2"></div><div class="calc" id="back3"></div><div class="calc" id="back"></div></div><div class="code-view"><h3>Gradient logitów</h3><pre><code class="language-c">// Dla softmax + cross-entropy gradient ma prostą postać:
+for (int v = 0; v &lt; VOCAB_SIZE; ++v) {
+    float one_hot = (v == target_id) ? 1.0f : 0.0f;
+    d_logits[v] = probs[v] - one_hot;
+}</code></pre><p class="code-note">Dla softmax połączonego z cross-entropy gradient względem logitów upraszcza się: od prawdopodobieństwa prawdziwego znaku odejmujemy 1, a dla pozostałych znaków gradient jest po prostu równy ich prawdopodobieństwu. To sygnał, o ile rozkład modelu odbiega od one-hot celu.</p><h3>Gradient warstwy wyjściowej</h3><pre><code class="language-c">// logits[v] = sum_j H_final[j] * Wout[j][v] + bout[v]
+for (int v = 0; v &lt; VOCAB_SIZE; ++v) {
+    dbout[v] = d_logits[v];
+    for (int j = 0; j &lt; D_MODEL; ++j)
+        dWout[j][v] = H_final[j] * d_logits[v];
+}</code></pre><p class="code-note">To bezpośrednie zastosowanie reguły łańcuchowej do ostatniej warstwy liniowej: gradient biasu jest równy gradientowi logitów, a gradient elementu macierzy to iloczyn odpowiedniej składowej <code>H_final</code> i gradientu logitu. Gradienty wcześniejszych warstw (MLP, attention, wektory osadzeń) wymagają dalszego cofania przez kolejne operacje.</p><h3>Aktualizacja SGD</h3><pre><code class="language-c">// Jeden krok SGD: parametr - learning_rate * gradient.
+for (int i = 0; i &lt; PARAM_COUNT; ++i) {
+    parameter[i] -= learning_rate * gradient[i];
+}
+
+// W tym materiale gradienty całego modelu są
+// przybliżane różnicą centralną:
+// grad ~= (loss(theta + eps) - loss(theta - eps)) / (2*eps)</code></pre><p class="code-note">W pliku demonstracyjnym gradienty całego modelu są liczone numerycznie metodą różnic centralnych: dla każdego parametru porównuje się stratę po małym przesunięciu „w górę” i „w dół”. To czytelny skrót edukacyjny, który pokazuje ideę gradientu bez pełnego autogradu; w prawdziwym trenowaniu sieci stosuje się automatyczne różniczkowanie, rzędy wielkości tańsze obliczeniowo.</p></div></section></div>
+<script defer="" src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"></script><script defer="" onload="renderMathInElement(document.body,{delimiters:[{left:'$$',right:'$$',display:true},{left:'$',right:'$',display:false},{left:'\\(',right:'\\)',display:false},{left:'\\[',right:'\\]',display:true}],throwOnError:false});" src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js"></script><script>
+(()=>{
+const $=id=>document.getElementById(id);
+const fmt=x=>Number(x).toFixed(5);
+const vec=a=>'['+a.map(fmt).join(', ')+']';
+const mat=a=>'<div class="matrix">'+a.map(r=>'['+r.map(fmt).join(', ')+']').join('\n')+'</div>';
+const dot=(a,b)=>a.reduce((s,x,i)=>s+x*b[i],0);
+const mv=(v,M)=>M[0].map((_,j)=>v.reduce((s,x,i)=>s+x*M[i][j],0));
+const add=(a,b)=>a.map((x,i)=>x+b[i]);
+const softmax=a=>{let m=Math.max(...a),e=a.map(x=>Math.exp(x-m)),z=e.reduce((s,x)=>s+x,0);return e.map(x=>x/z)};
+const tanh=a=>a.map(Math.tanh);
+const deep=o=>JSON.parse(JSON.stringify(o));
+const chars=[...'kot patrzy']; const vocab=[...new Set(chars)].sort(); const ids=Object.fromEntries(vocab.map((c,i)=>[c,i]));
+const input=[...'kot '], target='p', T=4,d=3,dh=4,V=vocab.length,eta=.025;
+// Deterministic demonstration parameters in place of unavailable trained weights.
+let seed=20261016; const rnd=()=>{seed=(seed*1664525+1013904223)>>>0;return seed/4294967296};
+const rand=(n,scale=.15)=>Array.from({length:n},()=>Array.isArray(scale)?0:(rnd()*2-1)*scale);
+const matR=(r,c,scale=.15)=>Array.from({length:r},()=>Array.from({length:c},()=> (rnd()*2-1)*scale));
+const vecR=(n,scale=.05)=>Array.from({length:n},()=> (rnd()*2-1)*scale);
+let P={E:matR(V,d),Pos:matR(T,d),WQ:matR(d,d),WK:matR(d,d),WV:matR(d,d),WO:matR(d,d),W1:matR(d,dh),b1:vecR(dh),W2:matR(dh,d),b2:vecR(d),Wout:matR(d,V),bout:vecR(V)};
+function forward(P,verbose=false){
+ const u=input.map(c=>ids[c]), X=u.map((id,t)=>add(P.E[id],P.Pos[t]));
+ const Q=X.map(x=>mv(x,P.WQ)), K=X.map(x=>mv(x,P.WK)), W=X.map(x=>mv(x,P.WV));
+ let scores=[],alphas=[],Z=[],Proj=[],H=[];
+ for(let i=0;i<T;i++){let sc=[];for(let j=0;j<=i;j++)sc.push(dot(Q[i],K[j])/Math.sqrt(d));scores.push(sc);let a=softmax(sc);alphas.push(a);let z=Array(d).fill(0);for(let j=0;j<=i;j++)for(let k=0;k<d;k++)z[k]+=a[j]*W[j][k];Z.push(z);let pr=mv(z,P.WO);Proj.push(pr);H.push(add(X[i],pr));}
+ let p=add(mv(H[T-1],P.W1),P.b1), m=tanh(p), mu=add(mv(m,P.W2),P.b2), hf=add(H[T-1],mu), logits=add(mv(hf,P.Wout),P.bout), probs=softmax(logits), loss=-Math.log(probs[ids[target]]);
+ return {u,X,Q,K,W,scores,alphas,Z,Proj,H,p,m,mu,hf,logits,probs,loss};
+}
+const f=forward(P);
+$('tok').innerHTML=`<p>Tekst: <code>kot patrzy</code></p><p>Posortowany słownik: <code>${vocab.map(c=>c===' '?'␠':c).join(', ')}</code>, zatem <b>V=${V}</b>.</p><p>Mapowanie ID: <code>${vocab.map((c,i)=>`${c===' '?'␠':c}→${i}`).join(', ')}</code></p><p>Okno wejściowe: <code>k o t ␠</code> → ID <code>${f.u.join(', ')}</code>. Cel następnego znaku: <code>p</code> → ID <b>${ids.p}</b>. Parametry: T=${T}, d=${d}, dₕ=${dh}, η=${eta}.</p>`;
+$('params').innerHTML=`<p>Wagi E, P, WQ, WK, WV, WO, W1, W2, Wout oraz biasy zostały ustalone deterministycznie do demonstracji.</p><p><b>E (osadzenia znaków)</b> — wiersze w kolejności <code>${vocab.map(c=>c===' '?'␠':c).join(', ')}</code>:</p>${mat(P.E)}<p><b>P (pozycje 0–3)</b>:</p>${mat(P.Pos)}<p class="small">Pozostałe macierze pokazujemy w kolejnych etapach, gdy są używane.</p>`;
+$('emb').innerHTML=input.map((c,t)=>`<p><b>t=${t}, znak „${c===' '?'spacja':c}”:</b> xₜ = E[${ids[c]}] + P[${t}] = ${vec(P.E[ids[c]])} + ${vec(P.Pos[t])} = <b>${vec(f.X[t])}</b></p>`).join('');
+$('qkv').innerHTML=`<p>Wzór dla każdej projekcji: wynikⱼ = Σₖ xₖ Wₖⱼ.</p>${input.map((c,t)=>`<p><b>t=${t} (${c===' '?'spacja':c})</b><br>qₜ = xₜWQ = ${vec(f.Q[t])}<br>kₜ = xₜWK = ${vec(f.K[t])}<br>vₜ = xₜWV = ${vec(f.W[t])}</p>`).join('')}<p><b>WQ</b>:</p>${mat(P.WQ)}<p><b>WK</b>:</p>${mat(P.WK)}<p><b>WV</b>:</p>${mat(P.WV)}`;
+$('attn').innerHTML=input.map((c,i)=>`<p><b>Pozycja i=${i}</b> — dozwolone są wyłącznie j≤i.<br>score = qᵢ·kⱼ/√3 = <code>${f.scores[i].map(fmt).join(', ')}</code><br>α = softmax(score) = <code>${vec(f.alphas[i])}</code><br>zᵢ = Σ αᵢⱼvⱼ = <code>${vec(f.Z[i])}</code><br>projᵢ = zᵢWO = <code>${vec(f.Proj[i])}</code><br>hᵢ = xᵢ + projᵢ = <b><code>${vec(f.H[i])}</code></b></p>`).join('')+`<p><b>WO</b>:</p>${mat(P.WO)}`;
+$('mlp').innerHTML=`<p>Używamy ostatniego wektora h₃ = ${vec(f.H[3])}.</p><p>p = h₃W₁+b₁ = <code>${vec(f.p)}</code></p><p>m = tanh(p) = <code>${vec(f.m)}</code></p><p>μ = mW₂+b₂ = <code>${vec(f.mu)}</code></p><p>h_final = h₃+μ = <b><code>${vec(f.hf)}</code></b></p><p><b>W₁</b>:</p>${mat(P.W1)}<p>b₁ = ${vec(P.b1)}; <b>W₂</b>:</p>${mat(P.W2)}<p>b₂ = ${vec(P.b2)}</p>`;
+$('out').innerHTML=`<p>Logity ℓ = h_final·Wout+b_out:</p>${vocab.map((c,i)=>`<p>ℓ[${c===' '?'spacja':c}] = <code>${fmt(f.logits[i])}</code>; π = <b>${(f.probs[i]*100).toFixed(3)}%</b></p>`).join('')}<p>Softmax: π = <code>${vec(f.probs)}</code> (suma = ${fmt(f.probs.reduce((a,b)=>a+b,0))}).</p><p>Strata dla prawdziwego znaku „p”: L = −ln(πₚ) = −ln(${fmt(f.probs[ids.p])}) = <b>${fmt(f.loss)}</b>.</p><p>Predykcja przed treningiem: <b>„${vocab[f.probs.indexOf(Math.max(...f.probs))]===' '?'spacja':vocab[f.probs.indexOf(Math.max(...f.probs))]}”</b> (największe prawdopodobieństwo).</p><p><b>Wout</b>:</p>${mat(P.Wout)}<p>b_out = ${vec(P.bout)}</p>`;
+// Central finite differences over every scalar parameter, followed by one SGD update.
+const refs=[]; function walk(obj,path=[]){for(const k of Object.keys(obj)){if(Array.isArray(obj[k])){if(obj[k].length && Array.isArray(obj[k][0]))obj[k].forEach((r,i)=>r.forEach((v,j)=>refs.push({path:[...path,k,i,j],get:()=>obj[k][i][j],set:x=>obj[k][i][j]=x})));else obj[k].forEach((v,i)=>refs.push({path:[...path,k,i],get:()=>obj[k][i],set:x=>obj[k][i]=x}));}}}walk(P);
+const eps=1e-5, grads=[];for(const r of refs){let old=r.get();r.set(old+eps);let plus=forward(P).loss;r.set(old-eps);let minus=forward(P).loss;r.set(old);grads.push((plus-minus)/(2*eps));}
+let maxg=Math.max(...grads.map(Math.abs)); const rows=refs.map((r,i)=>{let old=r.get(),g=grads[i];r.set(old-eta*g);return `<tr><td><code>${r.path.join('')}</code></td><td>${fmt(old)}</td><td>${fmt(g)}</td><td>${fmt(r.get())}</td></tr>`;});
+$('back').innerHTML=`<p>Gradient dla każdego parametru θ przybliżamy różnicą centralną: <code>∂L/∂θ ≈ [L(θ+ε)−L(θ−ε)]/(2ε)</code>, gdzie ε=${eps}. To metoda numeryczna do demonstracji; nie jest identyczna z autogradem.</p><p>Gradientów jest <b>${refs.length}</b>; największa wartość bezwzględna gradientu: ${fmt(maxg)}.</p><p>Aktualizacja każdego parametru: <code>θ_new = θ_old − ${eta}·gradient</code>. Tabela pokazuje wszystkie parametry skalarne przed krokiem, gradient i po kroku SGD.</p><div style="max-height:480px;overflow:auto"><table><thead><tr><th>Parametr</th><th>Przed</th><th>Gradient</th><th>Po SGD</th></tr></thead><tbody>${rows.join('')}</tbody></table></div><p>Strata przed aktualizacją: <b>${fmt(f.loss)}</b>. Po pojedynczym kroku SGD strata wynosi <b>${fmt(forward(P).loss)}</b>.</p>`;
+// Analytic backward pass for softmax + cross-entropy at the output layer.
+const dlogits=f.probs.map((pr,i)=>pr-(i===ids[target]?1:0));
+const dWout=P.Wout.map((row,i)=>row.map((_,j)=>f.hf[i]*dlogits[j]));
+const dbout=dlogits.slice();
+$('back2').innerHTML=`<p>Cel to znak „${target}”. Dla softmax połączonego z cross-entropy gradient upraszcza się do: <code>∂L/∂ℓᵥ = πᵥ − 1[v=y]</code>.</p><p>Wektor prawdopodobieństw π = <code>${vec(f.probs)}</code>.</p><p>Wektor celu one-hot dla znaku „${target}” = <code>${vec(vocab.map((c,i)=>i===ids[target]?1:0))}</code>.</p><p>Zatem <code>∂L/∂ℓ = π − one_hot(y)</code> = <b><code>${vec(dlogits)}</code></b>. Dla prawdziwego znaku p gradient wynosi πₚ−1 = ${fmt(f.probs[ids[target]]-1)}; dla pozostałych znaków gradient to ich prawdopodobieństwo.</p>`;
+$('back3').innerHTML=`<p>Logity: ℓ = h_final·Wout + b_out. Reguła łańcuchowa daje <code>∂L/∂b_out[j] = ∂L/∂ℓ[j]</code> oraz <code>∂L/∂Wout[i,j] = h_final[i] · ∂L/∂ℓ[j]</code>.</p><p>h_final = <code>${vec(f.hf)}</code>.</p><p><b>Gradient biasu</b> db_out = <code>${vec(dbout)}</code>.</p><p><b>Gradient macierzy Wout</b> (każdy element to iloczyn odpowiedniej składowej h_final i gradientu logitu):</p>${mat(dWout)}<p><b>Przykład pojedynczego elementu:</b> ∂L/∂Wout[0,${ids[target]}] = h_final[0]·(πₚ−1) = ${fmt(f.hf[0])}·(${fmt(f.probs[ids[target]]-1)}) = <b>${fmt(dWout[0][ids[target]])}</b>.</p><p><b>Aktualizacja SGD samej warstwy wyjściowej</b> dla η=${eta}: Wout_new = Wout − η·dWout, b_out_new = b_out − η·db_out.</p><p>Przykładowo b_out[${ids[target]}]: ${fmt(P.bout[ids[target]])} − ${eta}·(${fmt(dbout[ids[target]])}) = <b>${fmt(P.bout[ids[target]] - eta*dbout[ids[target]])}</b>. To pokazuje, jak błąd na wyjściu cofa się do parametrów. Pełne cofanie przez Wout do h_final, MLP i attention wymaga kolejnych reguł łańcuchowych; poniższa tabela obejmuje cały model metodą różnic centralnych.</p>`;
+})();
+</script>
+<script>
+(()=>{
+ const buttons=[...document.querySelectorAll(".view-mode")];
+ function setMode(mode){
+  document.body.dataset.rightView=mode;
+  document.querySelectorAll(".calc-cell .calc-view").forEach(el=>el.style.display=mode==="calc"?"block":"none");
+  document.querySelectorAll(".calc-cell .code-view").forEach(el=>el.style.display=mode==="code"?"block":"none");
+  buttons.forEach(b=>b.setAttribute("aria-pressed",String(b.dataset.mode===mode)));
+ }
+ buttons.forEach(b=>b.addEventListener("click",()=>setMode(b.dataset.mode)));
+ setMode("calc");
+})();
+</script>
+<script>
+(()=>{
+ const select=document.getElementById('languageSelect');
+ if(!select) return;
+ const translations={"1 — Wprowadzenie do AI":"1 — Introduction to AI","Jak działają modele językowe? — teoria i obliczenia":"How do language models work? — theory and calculations","Oznaczenia używane w całym materiale.":"Notation used throughout this material.","rozmiar słownika (liczba unikalnych znaków rozpoznawanych przez model),":"vocabulary size (number of unique characters recognized by the model),","długość okna kontekstu, czyli liczba znaków, które model widzi jednocześnie,":"context-window length, i.e. the number of characters the model sees at once,","wymiar wewnętrznej reprezentacji,":"dimension of the internal representation,","wymiar warstwy ukrytej MLP,":"dimension of the MLP hidden layer,","współczynnik uczenia (wielkość kroku aktualizacji parametrów).":"learning rate (the size of the parameter-update step).","Indeksy pozycji w oknie:":"Position indices in the window:","Indeksy składowych wektora:":"Vector-component indices:","Celem tego materiału jest szczegółowe, a zarazem przystępne wyjaśnienie, jak działają modele językowe: w jaki sposób zamieniają tekst na liczby, jak budują reprezentacje kontekstu, jak obliczają prawdopodobieństwa kolejnych elementów sekwencji i jak na podstawie błędu predykcji aktualizują swoje parametry. Kolejne części prowadzą od podstawowych pojęć, oznaczeń i wzorów aż do konkretnych obliczeń wykonywanych wewnątrz uproszczonej sieci neuronowej, tak aby każdy etap dało się prześledzić ręcznie na małym przykładzie.":"The goal of this material is a detailed yet accessible explanation of how language models work: how they turn text into numbers, how they build context representations, how they compute probabilities of the next sequence elements, and how they update their parameters from prediction error. The sections move from basic concepts, notation, and formulas to concrete calculations inside a simplified neural network, so that every stage can be traced by hand on a small example.","zamiana surowego tekstu na ciąg identyfikatorów (tu: pojedynczych znaków), które program może indeksować w tablicach.":"converting raw text into a sequence of IDs (here: single characters) that a program can index in arrays.","uczony wektor liczb rzeczywistych przypisany danemu znakowi; sam identyfikator jest tylko adresem, a znaczenie niesie wektor.":"a learned real-valued vector assigned to a given character; the identifier itself is only an address, while the vector carries the meaning.","uczalny parametr macierzy, który trening stopniowo dostosowuje.":"a trainable matrix parameter that training gradually adjusts.","dodatkowa wartość przesunięcia dodawana do wyniku transformacji liniowej.":"an extra shift added to the result of a linear transformation.","wektor opisujący, jakich informacji bieżąca pozycja „pyta” w kontekście.":"a vector describing what information the current position is “asking for” in the context.","wektor, z którym Query jest porównywane, aby ocenić dopasowanie.":"a vector that Query is compared against to score a match.","informacja, która po obliczeniu wag uwagi jest przekazywana dalej.":"the information that is passed on after attention weights are computed.","mechanizm, który na podstawie Q i K wylicza, w jakim stopniu bieżąca pozycja powinna korzystać z wcześniejszych (i bieżącej) pozycji.":"a mechanism that uses Q and K to compute how strongly the current position should use earlier (and the current) positions.","surowa, nienormalizowana ocena przypisana kandydatowi ze słownika.":"a raw, unnormalized score assigned to a vocabulary candidate.","przekształca wektor logitów w rozkład prawdopodobieństwa (wartości nieujemne, suma równa 1).":"converts a logit vector into a probability distribution (non-negative values that sum to 1).","skalarny pomiar błędu predykcji względem prawdziwego celu.":"a scalar measure of prediction error relative to the true target.","informuje, jak lokalnie zmieni się strata po drobnej zmianie parametru.":"indicates how the loss would change locally after a small change to a parameter.","prosta reguła aktualizacji: parametr jest przesuwany w kierunku przeciwnym do gradientu, ze współczynnikiem uczenia":"a simple update rule: the parameter is moved opposite the gradient, scaled by the learning rate","służy zwykle do losowania początkowych wag. Jeśli generator pseudolosowy ma ustalony":"is usually used to sample initial weights. If the pseudorandom generator has a fixed","i wywołania następują w tej samej kolejności, sekwencja liczb jest powtarzalna. Samo użycie":"and calls occur in the same order, the number sequence is repeatable. Merely using","nie oznacza jeszcze determinizmu między uruchomieniami; natomiast po ustaleniu wag ten sam forward pass, na tych samych danych i przy tych samych operacjach, w typowej implementacji daje ten sam wynik.":"does not yet imply determinism across runs; however, once the weights are fixed, the same forward pass on the same data with the same operations typically yields the same result in a standard implementation.","W każdym wierszu teoria po lewej i odpowiadający jej przykład liczbowy po prawej zaczynają się na tej samej wysokości, dzięki czemu wzór i konkretne liczby można czytać równolegle. Przykład używa krótkiego kontekstu „kot ” oraz celu „p” wziętego ze zdania „kot patrzy”: model dostaje cztery znaki wejścia i ma przewidzieć znak, który następuje zaraz po nich.":"In each row, the theory on the left and the matching numerical example on the right start at the same height, so a formula and concrete numbers can be read side by side. The example uses the short context “kot ” and the target “p” from the sentence “kot patrzy”: the model receives four input characters and must predict the character that follows them.","Tekst traktujemy jako ciąg znaków. Zanim sieć neuronowa cokolwiek policzy, każdy znak musi dostać stabilny identyfikator liczbowy. Słownik":"We treat text as a sequence of characters. Before the neural network computes anything, each character must receive a stable numeric ID. The vocabulary","to posortowany zbiór wszystkich unikalnych znaków, które model w ogóle potrafi rozpoznać; $V$ to liczba elementów tego zbioru.\nFunkcja tokenizacji przypisuje każdemu znakowi jego indeks:":"is the sorted set of all unique characters the model can recognize at all; $V$ is the number of elements in that set.\nThe tokenization function assigns each character its index:","Jeden przykład treningowy składa się z okna $T$ kolejnych znaków (kontekstu) oraz z celu — znaku, który w danych występuje zaraz po tym oknie:":"One training example consists of a window of $T$ consecutive characters (the context) and a target — the character that follows that window in the data:","Poniżej wymienione są wszystkie uczalne tensory modelu. Każdy z nich jest inicjalizowany niezależnie z rozkładu jednostajnego o małym zakresie, a następnie aktualizowany podczas treningu:":"Below are all trainable tensors of the model. Each is initialized independently from a small-range uniform distribution and is later updated during training:","Wagi startowe trzeba jakoś wypełnić liczbami. W praktyce używa się do tego generatora pseudolosowego":"Initial weights must be filled with numbers somehow. In practice a pseudorandom generator is used for that","ale sam fakt losowania nie oznacza, że późniejsze obliczenia są niepowtarzalne.":"but the mere fact of sampling does not mean later computations are non-repeatable.","Generator z ustalonym seedem:":"Generator with a fixed seed:","przy tym samym ziarnie i tej samej kolejności wywołań zawsze produkuje tę samą sekwencję liczb, więc wagi startowe są odtwarzalne.":"with the same seed and the same call order it always produces the same number sequence, so the starting weights are reproducible.","może przy kolejnym uruchomieniu dać inne wagi początkowe.":"may produce different initial weights on the next run.","gdy wagi, dane i kolejność operacji są już ustalone, forward pass w typowej implementacji sekwencyjnej jest deterministyczny. Drobne różnice mogą pojawić się przy równoległych operacjach lub na różnym sprzęcie.":"once weights, data, and operation order are fixed, the forward pass in a typical sequential implementation is deterministic. Small differences may still appear with parallel numeric operations or on different hardware.","W tym przykładzie generator ma jawne ziarno":"In this example the generator uses the explicit seed","dlatego demonstracyjne macierze są powtarzalne między uruchomieniami.":"so the demonstration matrices are repeatable across runs.","to po prostu odczyt wiersza tablicy":"is simply reading the row of table","nie wynik „z kształtu litery” ani ręcznie zaprojektowanej reguły. Liczba składowych każdego takiego wiersza to zawsze":"not a result “from the shape of the letter” nor a hand-designed rule. The number of components in each such row is always","w demonstracji $d=3$, więc każdy wektor osadzenia ma trzy liczby.":"in the demonstration $d=3$, so each embedding has three numbers.","budujemy reprezentację wejściową jako sumę wektora osadzenia znaku i wektora osadzenia pozycji:":"we build the input representation as the sum of the character embedding and the positional embedding:","To samo równanie zapisane składowo (dla każdej współrzędnej wektora osobno):":"The same equation written component-wise (for each vector coordinate separately):","W notacji używanej w programie wagi są indeksowane tak, że składowa $j$ wektora wynikowego powstaje jako iloczyn skalarny wektora":"In the program's notation, weights are indexed so that component $j$ of the result vector is the dot product of vector","z $j$-tą kolumną odpowiedniej macierzy projekcji. Innymi słowy: każda kolumna $W_Q$ (oraz analogicznie $W_K$, $W_V$) definiuje jedną składową Query, Key albo Value:":"with the $j$-th column of the corresponding projection matrix. In other words: each column of $W_Q$ (and likewise $W_K$, $W_V$) defines one component of Query, Key, or Value:","Dla zapytania (query) na pozycji $i$ model wolno porównywać wyłącznie z kluczami pozycji":"For a query at position $i$ the model may compare only against keys at positions","To tak zwana maska przyczynowa: przyszłe znaki są niedostępne, tak jak w rzeczywistym przewidywaniu kolejnego elementu sekwencji:":"This is the causal mask: future characters are unavailable, just as in genuine next-element prediction:","Odejmowanie maksimum od wszystkich score’ów przed policzeniem wykładników to standardowa stabilizacja numeryczna: zapobiega przepełnieniu przy dużych wartościach. Matematycznie wynik softmaxu się przez to nie zmienia, bo ten sam czynnik kasuje się w liczniku i mianowniku.":"Subtracting the maximum from all scores before exponentiation is standard numerical stabilization: it prevents overflow for large values. Mathematically the softmax result is unchanged, because the same factor cancels in the numerator and the denominator.","Do predykcji następnego znaku używamy wyłącznie reprezentacji z ostatniej pozycji,":"To predict the next character we use only the representation at the final position,","Dzięki masce przyczynowej ta pozycja „widzi” już cały dostępny kontekst (znaki":"Thanks to the causal mask this position already “sees” the entire available context (characters","więc to naturalne miejsce, z którego model czyta podsumowanie okna i przewiduje znak docelowy.":"so it is the natural place from which the model reads a summary of the window and predicts the target character.","Funkcja straty to entropia krzyżowa (cross-entropy) względem prawdziwego celu":"The loss function is cross-entropy with respect to the true target","Im mniejsze prawdopodobieństwo, które model przypisał poprawnemu znakowi, tym większa strata:":"The smaller the probability the model assigned to the correct character, the larger the loss:","Predykcja (greedy) to indeks znaku o największym prawdopodobieństwie:":"The (greedy) prediction is the index of the character with the highest probability:","W rozdziale 1 wyliczyliśmy pełny wynik modelu (forward pass) oraz wartość straty dla jednego przykładu. Teraz korzystamy dokładnie z tego wyniku: cofamy się od skalarnego błędu przez kolejne operacje, zbieramy gradienty względem parametrów i wykonujemy jeden krok aktualizacji SGD. Dzięki temu widać, w jaki sposób informacja o pomyłce na wyjściu wraca do wag.":"In Chapter 1 we computed the full model output (forward pass) and the loss for one example. Now we use that exact result: we step backward from the scalar error through successive operations, collect gradients with respect to the parameters, and take one SGD update step. This shows how information about the output mistake flows back to the weights.","W uproszczonym obrazie autogradu budowany jest graf operacji skalarnych: każda liczba pośrednia pamięta, z jakich argumentów powstała. Startujemy od pochodnej straty względem samej siebie:":"In a simplified view of autograd, a graph of scalar operations is built: each intermediate number remembers which arguments produced it. We start from the derivative of the loss with respect to itself:","Lokalne reguły różniczkowania (przykłady najczęściej używanych operacji) pozwalają „przenieść” gradient wstecz przez każdą krawędź grafu:":"Local differentiation rules (examples of the most common operations) let us “move” the gradient backward along each edge of the graph:","Gradienty zbierają się addytywnie w polach":"Gradients accumulate additively in the fields","Gdy ten sam parametr uczestniczy w wielu operacjach, jego wkłady gradientowe są sumowane.":"When the same parameter participates in many operations, its gradient contributions are summed.","Po zebraniu gradientów wykonujemy jeden krok spadku wzdłuż gradientu. Dla każdego parametru skalarnego":"After collecting gradients we take one step of gradient descent. For each scalar parameter","W programie demonstracyjnym współczynnik uczenia wynosi":"In the demonstration program the learning rate is","Przed kolejnym przykładem gradienty są zerowane, żeby nie mieszać sygnałów z różnych okien treningowych. W materiale gradienty całego modelu są dodatkowo ilustrowane numerycznie (różnice centralne), co ułatwia sprawdzenie idei bez pełnej implementacji autogradu.":"Gradients are reset before the next example so signals from different training windows are not mixed. In this material, gradients for the entire model are also illustrated numerically (central differences), which makes it easier to check the idea without a full autograd implementation.","Fragment w C pokazuje jawnie cztery znaki wejścia oraz identyfikator znaku docelowego. Symbole w stylu ID_K, ID_O itd. oznaczają indeksy ustalone przez słownik znaków; w pełnym programie mapowanie znak→ID trzyma się zwykle w tablicy lub strukturze asocjacyjnej.":"The C fragment shows the four input characters and the target-character ID explicitly. Symbols such as ID_K, ID_O, etc. denote indices fixed by the character vocabulary; in a full program the character→ID map is usually stored in an array or associative structure.","To uproszczony kod inicjalizacji z ustalonym ziarnem. Macierz pozycji P oraz pozostałe wagi są wypełniane podobnymi pętlami po wierszach i kolumnach; późniejszy trening (SGD) może zmienić każdą z tych wartości.":"This is simplified initialization code with a fixed seed. The positional matrix P and the remaining weights are filled by similar row/column loops; later training (SGD) may change each of these values.","Tablica P ma dokładnie jeden wiersz na każdą pozycję w oknie. Każdy wiersz zawiera D_MODEL liczb rzeczywistych; dodawanie embeddingu znaku i pozycji odbywa się składowa po składowej, bez mnożenia.":"Array P has exactly one row per position in the window. Each row contains D_MODEL real numbers; adding the character and positional embeddings is component-wise, with no multiplication.","Trzy zagnieżdżone pętle liczą trzy osobne projekcje liniowe. Wektory Q, K i V to zwykłe tablice liczb zmiennoprzecinkowych; powstają przez mnożenie wektora wejściowego przez odpowiednią macierz wag.":"Three nested loops compute three separate linear projections. Vectors Q, K, and V are ordinary floating-point arrays; they are produced by multiplying the input vector by the corresponding weight matrix.","Maska przyczynowa jest widoczna wprost w warunku":"The causal mask is visible directly in the condition","pozycja i sumuje wkłady wyłącznie z pozycji od 0 do i włącznie. Dzięki temu reprezentacja nie korzysta z przyszłych znaków, których w prawdziwym generowaniu jeszcze nie ma.":"position i sums contributions only from positions 0 through i inclusive. Thus the representation does not use future characters that would not yet exist in genuine generation.","MLP przekształca wyłącznie reprezentację ostatniej pozycji okna. Funkcja":"The MLP transforms only the representation at the last window position. The function","wprowadza nieliniowość między dwiema warstwami liniowymi; po drugiej warstwie wynik jest dodawany do wejścia MLP (połączenie rezydualne), co stabilizuje przepływ informacji.":"introduces a nonlinearity between two linear layers; after the second layer the result is added to the MLP input (a residual connection), which stabilizes information flow.","Softmax zamienia surowe logity na rozkład prawdopodobieństwa po całym słowniku. Strata":"Softmax converts raw logits into a probability distribution over the whole vocabulary. The loss","jest bliska zeru, gdy model przypisuje celowi wysokie prawdopodobieństwo, i rośnie, gdy to prawdopodobieństwo jest małe.":"is close to zero when the model assigns the target a high probability, and grows when that probability is small.","Dla softmax połączonego z cross-entropy gradient względem logitów upraszcza się: od prawdopodobieństwa prawdziwego znaku odejmujemy 1, a dla pozostałych znaków gradient jest po prostu równy ich prawdopodobieństwu. To sygnał, o ile rozkład modelu odbiega od one-hot celu.":"For softmax combined with cross-entropy the gradient w.r.t. logits simplifies: we subtract 1 from the true character's probability, and for all other characters the gradient equals their probability. This is the signal of how far the model's distribution is from the one-hot target.","To bezpośrednie zastosowanie reguły łańcuchowej do ostatniej warstwy liniowej: gradient biasu jest równy gradientowi logitów, a gradient elementu macierzy to iloczyn odpowiedniej składowej":"This is a direct application of the chain rule to the final linear layer: the bias gradient equals the logit gradient, and a matrix-element gradient is the product of the corresponding component of","i gradientu logitu. Gradienty wcześniejszych warstw (MLP, attention, wektory osadzeń) wymagają dalszego cofania przez kolejne operacje.":"and the logit gradient. Gradients for earlier layers (MLP, attention, embeddings) require further backpropagation through successive operations.","W pliku demonstracyjnym gradienty całego modelu są liczone numerycznie metodą różnic centralnych: dla każdego parametru porównuje się stratę po małym przesunięciu „w górę” i „w dół”. To czytelny skrót edukacyjny, który pokazuje ideę gradientu bez pełnego autogradu; w prawdziwym trenowaniu sieci stosuje się automatyczne różniczkowanie, rzędy wielkości tańsze obliczeniowo.":"In the demonstration file, gradients for the entire model are computed numerically with central differences: for each parameter the loss is compared after a small shift “up” and “down”. This is a clear educational shortcut that shows the idea of a gradient without full autograd; real network training uses automatic differentiation, which is orders of magnitude cheaper.","Jak działają modele językowe? — teoria i obliczenia":"How do language models work? — theory and calculations","Celem tego materiału jest przystępne wyjaśnienie, jak działają modele językowe: jak przetwarzają tekst, obliczają prawdopodobieństwa kolejnych elementów i uczą się na przykładach. Kolejne części prowadzą od podstawowych pojęć i wzorów do obliczeń wykonywanych wewnątrz sieci neuronowej.":"This material aims to explain clearly how language models work: how they process text, calculate probabilities for the next elements, and learn from examples. The chapters progress from basic concepts and formulas to the calculations performed inside a neural network.","MiniGPT — teoria i obliczenia krok po kroku": "MiniGPT — theory and step-by-step calculations", "MiniGPT — pełny opis matematyczny": "MiniGPT — full mathematical description", "Model z programu edukacyjnego: znakowy transformer z jedną głową": "Model from an educational program: a character-level transformer with one head", "Domyślne hiperparametry:": "Default hyperparameters:", "Oznaczenia.": "Notation.", "rozmiar słownika (liczba unikalnych znaków)": "vocabulary size (number of unique characters)", "długość kontekstu": "context length", "learning rate": "learning rate", "Indeksy pozycji:": "Position indices:", "Indeksy składowych wektora:": "Vector component indices:", "Wstęp — słownik pojęć": "Introduction — glossary", "zamiana tekstu na identyfikatory znaków.": "converting text into character IDs.", "wektor liczbowy przypisany znakowi.": "a numerical vector assigned to a character.", "uczalny parametr macierzy.": "a trainable matrix parameter.", "dodatkowa wartość przesunięcia.": "an additional offset value.", "czego dana pozycja szuka": "what a position is looking for", "czym pozycja może zostać dopasowana": "what a position can be matched against", "informacja przekazywana dalej.": "information passed onward.", "wylicza, na które wcześniejsze znaki zwrócić uwagę.": "calculates which earlier characters to attend to.", "surowy wynik dla znaku": "the raw score for a character", "zamienia logity na prawdopodobieństwa": "converts logits into probabilities", "liczbowy pomiar błędu.": "a numerical measure of error.", "informuje, jak zmieni się strata po zmianie parametru;": "indicates how the loss changes when a parameter changes;", "aktualizuje parametry w kierunku zmniejszenia straty.": "updates parameters to reduce the loss.", "Determinizm a rand():": "Determinism and rand():", "może losować początkowe wagi.": "may randomly initialize the weights.", "Jeśli generator pseudolosowy ma ustalony": "If a pseudorandom generator has a fixed", ", sekwencja jest powtarzalna.": " , the sequence is repeatable.", "Samo użycie": "Using", "nie oznacza determinizmu; po ustaleniu wag ten sam forward pass zwykle daje ten sam wynik.": "does not imply determinism; once the weights are fixed, the same forward pass usually produces the same result.", "Rozdział 1 — przejście w przód: co model liczy krok po kroku": "Chapter 1 — forward pass: what the model computes step by step", "W każdym wierszu teoria po lewej i odpowiadający jej przykład liczbowy po prawej zaczynają się na tej samej wysokości.": "In each row, the theory on the left and its numerical example on the right start at the same height.", "Przykład używa kontekstu": "The example uses the context", "i celu": "and a target", "w zdaniu": "in the sentence", "Widok prawej kolumny": "Right-column view", "Prawa kolumna:": "Right column:", "Wyniki obliczeń": "Calculation results", "Kod C": "C code", "Przełącz widok bez zmiany teorii po lewej.": "Switch the view without changing the theory on the left.", "Tokenizacja": "Tokenization", "Tekst to ciąg znaków.": "Text is a sequence of characters.", "to posortowany zbiór unikalnych znaków.": "is a sorted set of unique characters.", "Przykład treningowy: okno": "Training example: a window of", "znaków oraz cel (następny znak):": "characters and a target (the next character):", "Tokenizacja i cel": "Tokenization and target", "Tekst wejściowy i znak, którego model ma się nauczyć przewidywać.": "Input text and the character the model should learn to predict.", "Przykładowe mapowanie znak": "Example character-to-ID mapping", "(w prawdziwym programie": "(in a real program", "zwykle przechowuje się je w tablicy lub słowniku).": "these are usually stored in an array or dictionary).", "Symbole": "The symbols", "oznaczają indeksy ustalone przez słownik znaków.": "represent indices defined by the character vocabulary.", "Parametry modelu (wagi)": "Model parameters (weights)", "Losowość a determinizm — ważne rozróżnienie": "Randomness vs. determinism — an important distinction", "zwykle służy do losowania wartości początkowych wag.": "is commonly used to randomly initialize weights.", "Sam fakt, że wartość pochodzi z": "The fact that a value comes from", "nie oznacza jeszcze, że jest deterministyczna w sensie powtarzalności.": "does not by itself mean that it is deterministic in the sense of being repeatable.", "Generator pseudolosowy z ustalonym seedem:": "Pseudorandom generator with a fixed seed:", "daje tę samą sekwencję liczb, jeśli startuje z tego samego ziarna i wykonuje te same wywołania.": "produces the same sequence of numbers when started with the same seed and given the same calls.", "Generator bez ustalonego ziarna": "A generator without a fixed seed", "może dać inne wagi przy kolejnym uruchomieniu.": "may produce different weights on the next run.", "Po inicjalizacji:": "After initialization:", "przy tych samych wagach, danych i operacjach forward pass jest deterministyczny w typowej implementacji.": "with the same weights, data, and operations, the forward pass is deterministic in a typical implementation.", "Różnice sprzętowe lub niedeterministyczne operacje równoległe mogą jednak powodować drobne rozbieżności.": "Hardware differences or nondeterministic parallel operations may nevertheless cause small discrepancies.", "W tym przykładzie generator jest pseudolosowy, ale ma jawne ziarno": "In this example, the generator is pseudorandom but uses the explicit seed", "Dlatego demonstracyjne macierze są powtarzalne — nie dlatego, że": "Therefore, the demonstration matrices are repeatable—not because", "zawsze zwraca te same liczby.": "always returns the same numbers.", "Uczalne tensory (wszystkie inicjalizowane niezależnie z rozkładu jednostajnego):": "Trainable tensors (all independently initialized from a uniform distribution):", "embedding znaku,": "character embedding,", "embedding pozycji,": "positional embedding,", "projekcje attention,": "attention projections,", "MLP warstwa 1,": "MLP layer 1,", "MLP warstwa 2,": "MLP layer 2,", "głowa wyjściowa.": "output head.", "Inicjalizacja": "Initialization", "Konkretne liczby typu": "Specific values such as", "to odczyt wiersza": "are read from row", "o indeksie": "at index", "— nie wynik „z kształtu litery”.": "— they are not derived from the shape of the letter.", "Liczba składowych wiersza to zawsze": "The number of components in a row is always", "Parametry przykładu": "Example parameters", "Te same seed + ta sama kolejność wywołań": "Same seed + same call order", "te same wagi.": "the same weights.", "Przykład: każda komórka macierzy": "Example: each cell of matrix", "dostaje wagę.": "is assigned a weight.", "To uproszczony kod inicjalizacji.": "This is simplified initialization code.", "oraz pozostałe macierze są inicjalizowane podobnymi pętlami; później trening może zmienić te wartości.": "and the remaining matrices are initialized with similar loops; training may change these values later.", "Embedding + pozycja": "Embedding + position", "Dla każdej pozycji": "For each position", "czyli składowo:": "component-wise:", "Embedding znaku + pozycja": "Character embedding + position", "Dla pozycji": "For position", "pobierz wektor znaku": "retrieve the character vector", "i wektor pozycji": "and the positional vector", "Przykład dla": "Example for", "na pozycji": "at position", "ma jeden wiersz na pozycję.": "has one row per position.", "Każdy wiersz zawiera": "Each row contains", "liczb; dodawanie odbywa się składowa po składowej.": "numbers; addition is performed component by component.", "Projekcje Query / Key / Value": "Query / Key / Value projections", "W notacji programu wagi są indeksowane tak, że składowa": "In the program's notation, weights are indexed so that component", "wyniku to iloczyn skalarny": "of the result is the dot product of", "z $j$-tą kolumną odpowiedniej macierzy projekcji. Innymi słowy:": "with the j-th column of the corresponding projection matrix. In other words:", "-tą kolumną macierzy:": "-th column of the matrix:", "Query, Key, Value": "Query, Key, Value", "Mnożenie wektora": "Multiplying vector", "przez macierze": "by matrices", "Trzy pętle liczą trzy projekcje.": "The three loops compute the three projections.", "to zwykłe wektory liczb, wyliczane przez mnożenie macierzy.": "are ordinary numeric vectors computed by matrix multiplication.", "jedna głowa": "single head", "Dla query na pozycji": "For a query at position", "wolno używać tylko kluczy": "only keys", "(maska przyczynowa):": "are allowed (causal mask):", "Softmax → wagi uwagi": "Softmax → attention weights", "Odejmowanie maksimum to stabilizacja numeryczna; matematycznie softmax się nie zmienia.": "Subtracting the maximum improves numerical stability; mathematically, the softmax is unchanged.", "Agregacja wartości i projekcja wyjścia": "Value aggregation and output projection", "Residual": "Residual connection", "Pozycja": "Position", "dozwolone są wyłącznie": "only", "Wartości": "values", "MLP na ostatniej pozycji": "MLP at the final position", "Do predykcji następnego znaku używamy": "To predict the next character, we use", "(po causal attention „widzi” cały kontekst).": "(after causal attention, it can “see” the entire context).", "Uproszczona warstwa MLP dla ostatniej pozycji.": "Simplified MLP layer for the final position.", "jest nieliniowością; po drugiej warstwie dodawane jest połączenie rezydualne.": "is the nonlinearity; a residual connection is added after the second layer.", "Logity, softmax, strata": "Logits, softmax, and loss", "Cross-entropy względem prawdziwego celu": "Cross-entropy with respect to the true target", "Predykcja:": "Prediction:", "Jeden logit dla każdego znaku słownika.": "One logit for each character in the vocabulary.", "Softmax zamienia logity na prawdopodobieństwa.": "Softmax converts logits into probabilities.", "Strata": "Loss", "jest mała, gdy model przypisuje mu wysokie prawdopodobieństwo.": "is low when the model assigns it a high probability.", "Rozdział 2 — od wyniku do wag: obliczenia wstecz": "Chapter 2 — from output to weights: the backward pass", "W rozdziale 1 wyliczyliśmy wynik modelu i stratę. Teraz korzystamy dokładnie z tego wyniku, cofamy się od błędu i obliczamy, jak zmienić parametry.": "In Chapter 1, we computed the model output and loss. Now we use that exact result, propagate backward from the error, and calculate how to change the parameters.", "Backward (szkic autogradu)": "Backward pass (outline of automatic differentiation)", "Budowany jest graf operacji skalarnych. Start:": "A graph of scalar operations is built. Start with:", "Lokalne reguły (przykłady):": "Local rules (examples):", "Gradienty zbierają się w polach": "Gradients accumulate in the fields", "dla każdego parametru": "for every parameter", "Aktualizacja SGD": "SGD update", "Dla każdego parametru skalarnego": "For each scalar parameter", "W programie": "In the program,", "Gradienty zerowane przed kolejnym przykładem.": "Gradients are reset before the next example.", "Gradient straty względem logitów": "Loss gradient with respect to logits", "Gradienty warstwy wyjściowej": "Output-layer gradients", "Aktualizacja parametrów całego modelu": "Updating all model parameters", "Dla prawdziwego znaku odejmujemy 1 od jego prawdopodobieństwa; dla pozostałych znaków gradient jest równy prawdopodobieństwu.": "For the true character, subtract 1 from its probability; for all other characters, the gradient equals their probability.", "To reguła łańcuchowa dla ostatniej warstwy.": "This is the chain rule for the final layer.", "Gradienty wcześniejszych warstw wymagają dalszego cofania przez kolejne operacje.": "Gradients for earlier layers require propagating backward through additional operations.", "Jeden krok SGD: parametr - learning_rate * gradient.": "One SGD step: parameter - learning_rate * gradient.", "W tym materiale gradienty całego modelu są liczone numerycznie metodą różnic centralnych.": "In this material, gradients for the entire model are computed numerically using central differences.", "To czytelny skrót edukacyjny, a nie wydajna metoda używana zwykle w trenowaniu sieci.": "This is an easy-to-follow educational shortcut, not an efficient method normally used to train neural networks.", "Dodatkowe informacje": "Additional information", "Pełny przebieg jednego kroku treningu": "Full sequence of one training step", "Wybór okna": "Choose a window", "MLP na": "MLP on", "autograd.": "automatic differentiation.", "na wszystkich wagach.": "on all weights.", "Inference": "Inference", "Ten sam forward": "The same forward pass", "bez": "without", "liczenia": "computing", "Na wyjściu:": "Output:", "Złożoność (dla orientacji)": "Complexity (for reference)", "Etap": "Stage", "Koszt (rząd)": "Cost (order)", "Przy": "With", "i małym": "and a small", "całość da się policzyć ręcznie — stąd wartość edukacyjna programu.": "the whole model can be calculated by hand—hence the educational value of the program.", "Dokument odpowiada implementacji w": "This document corresponds to the implementation in", "Wzory renderowane przez KaTeX.": "Equations are rendered by KaTeX.", "spacja": "space", "Tekst:": "Text:", "Posortowany słownik:": "Sorted vocabulary:", "Mapowanie ID:": "ID mapping:", "Okno wejściowe:": "Input window:", "Cel następnego znaku:": "Next-character target:", "Parametry:": "Parameters:", "Wagi": "Weights", "— wiersze w kolejności": "— rows in the order", "Pozostałe macierze pokazujemy w kolejnych etapach, gdy są używane.": "The remaining matrices are shown in later stages when they are used.", "Wzór dla każdej projekcji: wynik": "Formula for each projection: result", "Pozycja i=": "Position i=", "dozwolone są wyłącznie j≤i.": "only j≤i are allowed.", "score =": "score =", "Używamy ostatniego wektora": "We use the final vector", "Strata dla prawdziwego znaku": "Loss for the true character", "Predykcja przed treningiem:": "Prediction before training:", "największe prawdopodobieństwo": "highest probability", "Cel to znak": "The target is the character", "Dla softmax połączonego z cross-entropy gradient upraszcza się do:": "For softmax combined with cross-entropy, the gradient simplifies to:", "Wektor prawdopodobieństw": "Probability vector", "Wektor celu one-hot dla znaku": "One-hot target vector for character", "Zatem": "Therefore", "Dla prawdziwego znaku p gradient wynosi": "For the true character p, the gradient is", "; dla pozostałych znaków gradient to ich prawdopodobieństwo.": "; for the remaining characters, the gradient is their probability.", "Logity:": "Logits:", "Reguła łańcuchowa daje": "The chain rule gives", "Gradient biasu": "Bias gradient", "Gradient macierzy": "Matrix gradient", "każdy element to iloczyn odpowiedniej składowej": "each element is the product of the corresponding component", "Przykład pojedynczego elementu:": "Example of a single element:", "Aktualizacja SGD samej warstwy wyjściowej": "SGD update for the output layer only", "Przykładowo": "For example", "To pokazuje, jak błąd na wyjściu cofa się do parametrów.": "This shows how the output error propagates back to the parameters.", "Pełne cofanie przez Wout do h_final, MLP i attention wymaga kolejnych reguł łańcuchowych; poniższa tabela obejmuje cały model metodą różnic centralnych.": "Fully backpropagating through Wout to h_final, the MLP, and attention requires additional chain-rule steps; the table below covers the entire model using central differences.", "Parametr": "Parameter", "Przed": "Before", "Gradient": "Gradient", "Po SGD": "After SGD", "Gradient dla każdego parametru": "The gradient for each parameter", "przybliżamy różnicą centralną:": "is approximated using central differences:", "To metoda numeryczna do demonstracji; nie jest identyczna z autogradem.": "This is a numerical demonstration method; it is not identical to automatic differentiation.", "Gradientów jest": "Number of gradients:", "największa wartość bezwzględna gradientu:": "maximum absolute gradient:", "Aktualizacja każdego parametru:": "Update each parameter:", "Tabela pokazuje wszystkie parametry skalarne przed krokiem, gradient i po kroku SGD.": "The table shows every scalar parameter before the step, its gradient, and its value after the SGD step.", "Strata przed aktualizacją:": "Loss before the update:", "Po pojedynczym kroku SGD strata wynosi": "After one SGD step, the loss is"};
+ Object.assign(translations, {
+  "Osadzenie (embedding)": "Embedding",
+  "Waga": "Weight",
+  "Wyraz wolny (bias)": "Bias",
+  "Zapytanie (Query, Q)": "Query (Q)",
+  "Klucz (Key, K)": "Key (K)",
+  "Wartość (Value, V)": "Value (V)",
+  "Mechanizm uwagi (attention)": "Attention mechanism",
+  "W każdym wierszu teoria po lewej i odpowiadający jej przykład liczbowy po prawej zaczynają się na tej samej wysokości, dzięki czemu wzór i konkretne liczby można czytać równolegle.": "In each row, the theory on the left and its numerical example on the right start at the same height, so you can read the formula and numbers side by side.",
+  "Posortowany słownik:": "Sorted vocabulary:",
+  "Wagi E, P, WQ, WK, WV, WO, W1, W2, Wout oraz biasy zostały ustalone deterministycznie do demonstracji.": "The E, P, WQ, WK, WV, WO, W1, W2, and Wout weights, along with the biases, were set deterministically for this demonstration.",
+  "E (osadzenia znaków)": "E (character embeddings)",
+  "wiersze w kolejności ": "rows in the order ",
+  "t=": "t=",
+  "znak „": "character “",
+  "spacja": "space",
+  "Dla każdej pozycji ": "For each position ",
+  "budujemy reprezentację wejściową jako sumę wektora osadzenia znaku i wektora osadzenia pozycji:": "we build the input representation as the sum of the character embedding and the positional embedding:",
+  "W notacji programu wagi są indeksowane tak, że składowa ": "In the program's notation, weights are indexed so that component ",
+  "wyniku to iloczyn skalarny ": "of the result is the dot product of ",
+  "(analogicznie dla K,V)": "(and analogously for K and V)",
+  "Dla zapytania (query) na pozycji ": "For a query at position ",
+  "model wolno porównywać wyłącznie z kluczami pozycji ": "the model may compare only against keys at positions ",
+  "To tak zwana maska przyczynowa: przyszłe znaki są niedostępne, tak jak w rzeczywistym przewidywaniu kolejnego elementu sekwencji:": "This is the causal mask: future characters are unavailable, just as in genuine next-element prediction:",
+  "Odejmowanie maksimum od wszystkich wyników przed potęgowaniem to standardowa stabilizacja numeryczna: zapobiega przepełnieniu dla dużych wartości. Matematycznie wynik softmax pozostaje taki sam, ponieważ ten sam czynnik skraca się w liczniku i mianowniku.": "Subtracting the maximum from all scores before exponentiation is standard numerical stabilization: it prevents overflow for large values. The softmax result is mathematically unchanged because the same factor cancels in the numerator and denominator.",
+  "Z iloczynu skalarnego do wektora kontekstu": "From a dot product to a context vector",
+  "Iloczyn skalarny ": "The dot product ",
+  "mnoży odpowiadające sobie składowe wektorów i sumuje iloczyny. Mierzy, jak dobrze zapytanie na pozycji ": "multiplies corresponding vector components and sums the products. It measures how well the query at position ",
+  "pasuje do klucza na pozycji ": "matches the key at position ",
+  "Dzielenie przez ": "Dividing by ",
+  "przeskalowuje wartości, gdzie ": "rescales the values, where ",
+  "to liczba składowych Query/Key. Nie jest to normalizacja do sumy 1 — tę rolę pełni softmax.": "is the number of Query/Key components. This is not normalization to a sum of 1; that is the role of softmax.",
+  "Maska przyczynowa wymusza warunek ": "The causal mask enforces the condition ",
+  ": pozycja ": ": position ",
+  "może korzystać z siebie i z przeszłości, ale nie z przyszłych znaków. To konieczne, aby trening symulował rzeczywiste przewidywanie kolejnego znaku, kiedy przyszłość jest jeszcze nieznana.": "may use itself and the past, but not future characters. This is necessary for training to simulate genuine next-character prediction, when the future is not yet known.",
+  "Softmax przekształca wyniki dopasowania w wagi ": "Softmax converts matching scores into weights ",
+  ". Każda waga jest nieujemna, a suma wag po dozwolonych pozycjach wynosi 1. Wreszcie ": ". Each weight is non-negative, and the weights over allowed positions sum to 1. Finally, ",
+  " tworzy średnią ważoną wektorów Value. Większa waga oznacza większy udział danej pozycji w wyniku, ale nie oznacza automatycznie, że ta pozycja jest semantycznie „najważniejsza” w każdym sensie.": " forms a weighted average of the Value vectors. A larger weight gives a position a larger contribution, but does not automatically mean that position is semantically “most important” in every sense.",
+  "Do predykcji następnego znaku używamy wyłącznie reprezentacji z ostatniej pozycji, ": "To predict the next character, we use only the representation at the final position, ",
+  ". Dzięki masce przyczynowej ta pozycja „widzi” już cały dostępny kontekst (znaki ": ". Thanks to the causal mask, this position can already “see” the entire available context (characters ",
+  "), więc to naturalne miejsce, z którego model odczytuje podsumowanie okna i przewiduje znak docelowy.": "), making it the natural place for the model to read a summary of the window and predict the target character.",
+  "Jak czytać równanie MLP?": "How should the MLP equation be read?",
+  "MLP przetwarza reprezentację po attention, zwykle za pomocą dwóch projekcji liniowych z nieliniowością pomiędzy nimi.": "The MLP processes the representation after attention, usually using two linear projections with a nonlinearity between them.",
+  "tworzy reprezentację ukrytą; aktywacja ": "creates a hidden representation; the activation ",
+  "działa na każdej składowej; ": "acts on each component; ",
+  "mapuje ją z powrotem do szerokości modelu. Biasy ": "maps it back to the model width. The biases ",
+  " są dodawane do odpowiednich składowych wyjścia.": " are added to the corresponding output components.",
+  "Wymiary muszą się zgadzać: jeśli reprezentacja wejściowa ma ": "Dimensions must match: if the input representation has ",
+  " składowych, a warstwa ukryta ma ": " components and the hidden layer has ",
+  ", pierwsza projekcja mapuje ": ", the first projection maps ",
+  ", a druga mapuje ": ", and the second maps ",
+  ". Nieliniowość pozwala na bardziej złożone przekształcenia niż samo mnożenie macierzy.": ". The nonlinearity allows more complex transformations than matrix multiplication alone.",
+  "Logity ": "Logits ",
+  "Logity ℓ = h_final·Wout+b_out:": "Logits ℓ = h_final·Wout+b_out:",
+  "Softmax: π = ": "Softmax: π = ",
+  "(suma = ": "(sum = ",
+  "Strata dla prawdziwego znaku „p”: ": "Loss for the true character “p”: ",
+  "Predykcja przed treningiem: „space” (największe prawdopodobieństwo).": "Prediction before training: “space” (highest probability).",
+  "W uproszczonym ujęciu autogradu budowany jest graf operacji skalarnych: każda wartość pośrednia pamięta, jakie argumenty ją utworzyły. Zaczynamy od pochodnej straty względem samej siebie:": "In a simplified view of autograd, a graph of scalar operations is built: each intermediate value remembers which arguments produced it. We start with the derivative of the loss with respect to itself:",
+  "Lokalne reguły różniczkowania (przykłady najczęstszych operacji) pozwalają „przenosić” gradient wstecz po każdej krawędzi grafu:": "Local differentiation rules (examples of common operations) let us propagate the gradient backward along each edge of the graph:",
+  "Gradienty sumują się w polach ": "Gradients accumulate in the fields ",
+  " dla każdego parametru ": " for each parameter ",
+  "Co oznacza „propagowanie błędu wstecz”?": "What does “propagating the error backward” mean?",
+  "Podczas przebiegu w przód model oblicza wynik, a strata porównuje go z celem. Backpropagation oblicza następnie, jak zmiana każdej wartości pośredniej i parametru wpływa na stratę. Reguła łańcuchowa łączy pochodne kolejnych operacji: jak parametr wpływa na wynik i jak ten wynik wpływa na stratę.": "During the forward pass, the model computes an output and the loss compares it with the target. Backpropagation then calculates how changing each intermediate value and parameter affects the loss. The chain rule combines derivatives of successive operations: how a parameter affects an output, and how that output affects the loss.",
+  "Pochodna ": "The derivative ",
+  " odpowiada na pytanie: jak lokalnie zmieniłaby się strata, gdyby parametr ": " answers this question: how would the loss change locally if parameter ",
+  " zmienił się nieznacznie, przy pozostałych parametrach stałych? Dodatnia pochodna oznacza, że zwiększenie parametru lokalnie zwiększa stratę; ujemna — że ją zmniejsza. Wartość bezwzględna opisuje lokalną wrażliwość, a nie ostateczną wartość aktualizacji.": " changed slightly while the other parameters stayed fixed? A positive derivative means increasing the parameter locally increases the loss; a negative derivative means it decreases the loss. The magnitude describes local sensitivity, not the final update value.",
+  "Po zebraniu gradientów wykonujemy jeden krok spadku wzdłuż gradientu. Dla każdego parametru skalarnego ": "After collecting the gradients, we take one gradient-descent step. For each scalar parameter ",
+  "W demonstracyjnym programie współczynnik uczenia wynosi ": "In the demonstration program, the learning rate is ",
+  ". Gradienty są zerowane przed kolejnym przykładem, aby sygnały z różnych okien treningowych nie mieszały się. W tym materiale gradienty całego modelu są też ilustrowane numerycznie (różnicami centralnymi), co ułatwia sprawdzenie idei bez pełnej implementacji autogradu.": ". Gradients are reset before the next example so signals from different training windows are not mixed. In this material, gradients for the entire model are also illustrated numerically using central differences, making it easier to check the idea without a full autograd implementation.",
+  "Logity: ℓ = h_final·Wout + b_out. Reguła łańcuchowa daje ": "Logits: ℓ = h_final·Wout + b_out. The chain rule gives ",
+  "Wout (każdy element to iloczyn odpowiedniej składowej h_final i gradientu logitu):": "Wout (each element is the product of the corresponding h_final component and the logit gradient):",
+  "Przykładowo ": "For example, ",
+  "To pokazuje, jak błąd na wyjściu cofa się do parametrów.": "This shows how the output error propagates back to the parameters.",
+  "Pełne cofanie przez Wout do h_final, MLP i attention wymaga dodatkowych kroków reguły łańcuchowej; poniższa tabela obejmuje cały model metodą różnic centralnych.": "Fully backpropagating through Wout to h_final, the MLP, and attention requires additional chain-rule steps; the table below covers the entire model using central differences.",
+  "gdzie ε=": "where ε=",
+  "To metoda numeryczna do demonstracji; nie jest identyczna z autogradem.": "This is a numerical demonstration method; it is not identical to automatic differentiation.",
+  "Gradientów jest ": "Number of gradients: ",
+  "; największa wartość bezwzględna gradientu: ": "; maximum absolute gradient: ",
+  "Aktualizacja każdego parametru: ": "Update each parameter: ",
+  "Tabela pokazuje każdy parametr skalarny przed krokiem, jego gradient i wartość po kroku SGD.": "The table shows every scalar parameter before the step, its gradient, and its value after the SGD step.",
+  "Strata przed aktualizacją: ": "Loss before the update: ",
+  ". Po jednym kroku SGD strata wynosi ": ". After one SGD step, the loss is ",
+  "oraz biasy": "and biases",
+  "na przykładzie ": "in the example ",
+  "Dla prawdziwego znaku p gradient wynosi ": "For the true character p, the gradient is ",
+  "; dla pozostałych znaków gradient to ich prawdopodobieństwo.": "; for the remaining characters, the gradient is their probability.",
+  "Wynik przed treningiem: ": "Output before training: ",
+  "Dla softmax + cross-entropy gradient ma prostą postać:": "For softmax + cross-entropy, the gradient has a simple form:",
+  "Mnożenie macierzy ": "Matrix multiplication ",
+  "warstwa wyjściowa": "output layer",
+  "Dane wejściowe: ": "Input: ",
+  "Cel następnego znaku: ": "Next-character target: ",
+  "Parametry: ": "Parameters: ",
+  "Mapowanie ID: ": "ID mapping: ",
+  "Okno wejściowe: ": "Input window: ",
+  "Wzór dla każdej projekcji: wynik": "Formula for each projection: result",
+  "Używamy ostatniego wektora ": "We use the final vector ",
+  "Dla pozycji ": "For position ",
+  "Wynik ": "Result ",
+  "przed treningiem": "before training",
+  "po treningu": "after training",
+  "Strata": "Loss",
+  "Parametr": "Parameter",
+  "Przed": "Before",
+  "Po SGD": "After SGD"
+ });
+ Object.assign(translations, {
+  "1 — Wprowadzenie do AI":"1 — Introduction to AI",
+  "Wstęp — słownik pojęć":"Introduction — glossary",
+  "Rozdział 1 — przejście w przód: co model liczy krok po kroku":"Chapter 1 — forward pass: what the model computes step by step",
+  "Przełącz widok bez zmiany teorii po lewej.":"Switch the view without changing the theory on the left.",
+  "Tekst traktujemy jako ciąg znaków. Zanim sieć neuronowa cokolwiek policzy, każdy znak musi dostać stabilny identyfikator liczbowy. Słownik $\\mathcal{V}=\\{c_0,\\ldots,c_{V-1}\\}$ to posortowany zbiór wszystkich unikalnych znaków, które model w ogóle potrafi rozpoznać; $V$ to liczba elementów tego zbioru.":"We treat text as a sequence of characters. Before the neural network computes anything, each character must receive a stable numeric ID. The vocabulary $\\mathcal{V}=\\{c_0,\\ldots,c_{V-1}\\}$ is the sorted set of all unique characters the model can recognize; $V$ is the number of elements in that set.",
+  "Funkcja tokenizacji przypisuje każdemu znakowi jego indeks:":"The tokenization function assigns each character its index:",
+  "Jeden przykład treningowy składa się z okna $T$ kolejnych znaków (kontekstu) oraz z celu — znaku, który w danych występuje zaraz po tym oknie:":"One training example consists of a window of $T$ consecutive characters (the context) and a target—the character that follows that window in the data:",
+  "jest zbiorem wszystkich znaków, które model może rozpoznać. Symbol \\(V\\) oznacza liczbę elementów tego zbioru, a nie sam zbiór. Indeks \\(i\\) biegnie od \\(0\\) do \\(V-1\\), dlatego ostatni poprawny identyfikator to \\(V-1\\). Zapis \\{c_0,\\ldots,c_{V-1}\\} oznacza, że każdy znak w słowniku ma własną pozycję i nie ma w nim duplikatów.":"The vocabulary is the set of all characters the model can recognize. The symbol \\(V\\) denotes the number of elements in this set, not the set itself. Index \\(i\\) runs from \\(0\\) to \\(V-1\\), so the last valid ID is \\(V-1\\). The notation \\(\\{c_0,\\ldots,c_{V-1}\\}\\) means that each vocabulary character has its own position and there are no duplicates.",
+  "Funkcja \\mathrm{id} przypisuje znakowi liczbę całkowitą. Strzałka \\(\\to\\) oznacza, że funkcja przyjmuje element ze zbioru po lewej i zwraca element ze zbioru po prawej. Równość \\(\\mathrm{id}(c_i)=i\\) mówi, że znak \\(c_i\\) otrzymuje identyfikator \\(i\\). To kodowanie nie jest jeszcze uczeniem: jest jedynie sposobem zapisania tekstu w postaci, którą program może indeksować.":"The function \\(\\mathrm{id}\\) maps a character to an integer. The arrow \\(\\to\\) means the function accepts an element from the set on the left and returns an element from the set on the right. The equality \\(\\mathrm{id}(c_i)=i\\) says that character \\(c_i\\) receives ID \\(i\\). This encoding is not learning; it is simply a way to represent text so the program can index it.",
+  "Wektor \\(\\mathbf{s}=(s_0,\\ldots,s_{T-1})\\) to okno wejściowe zawierające dokładnie \\(T\\) znaków. Indeks zaczyna się od zera, więc ostatni znak ma indeks \\(T-1\\). Warunek \\(s_t\\in\\mathcal{V}\\) oznacza, że każdy znak wejściowy musi należeć do słownika. \\(y\\) jest osobnym znakiem docelowym — tym, który występuje po oknie w danych treningowych.":"The vector \\(\\mathbf{s}=(s_0,\\ldots,s_{T-1})\\) is an input window containing exactly \\(T\\) characters. Indexing starts at zero, so the last character has index \\(T-1\\). The condition \\(s_t\\in\\mathcal{V}\\) means every input character must belong to the vocabulary. \\(y\\) is a separate target character—the one that follows the window in the training data.",
+  "W ostatnim wzorze \\(u_t\\) to numeryczna reprezentacja znaku \\(s_t\\), natomiast \\(y^{\\mathrm{id}}\\) to identyfikator celu. Indeks górny „id” jest tu etykietą, nie potęgowaniem. Model dostaje identyfikatory wejściowe, a podczas treningu porównuje swoje przewidywanie z identyfikatorem prawidłowego znaku. Dla przykładu „kot p” oknem może być „kot ”, a celem znak „p”.":"In the final equation, \\(u_t\\) is the numeric representation of input character \\(s_t\\), while \\(y^{\\mathrm{id}}\\) is the target ID. The superscript “id” is a label, not an exponent. The model receives input IDs and, during training, compares its prediction with the ID of the correct character. For example, in “kot p”, the input window can be “kot ” and the target is “p”.",
+  "Nie należy ich mylić: \\(T\\) nie jest liczbą możliwych znaków, a \\(V\\) nie jest długością zdania.":"Do not confuse them: \\(T\\) is not the number of possible characters, and \\(V\\) is not the sentence length.",
+  "Poniżej wymienione są wszystkie uczalne tensory modelu. Każdy z nich jest inicjalizowany niezależnie z rozkładu jednostajnego o małym zakresie, a następnie aktualizowany podczas treningu:":"The following are all trainable tensors in the model. Each is initialized independently from a small-range uniform distribution and then updated during training:",
+  "Konkretne liczby typu $E[\\,$„a”$\\,]=[0{,}11,\\,0{,}12,\\,-0{,}13]$ to po prostu odczyt wiersza tablicy $E$ o indeksie $\\mathrm{id}($„a”$)$ — nie wynik „z kształtu litery” ani ręcznie zaprojektowanej reguły. Liczba składowych każdego takiego wiersza to zawsze $d=d_{\\mathrm{model}}$; w demonstracji $d=3$, więc każdy wektor osadzenia ma trzy liczby.":"Specific values such as $E[\\,$“a”$\\,]=[0.11,\\,0.12,\\,-0.13]$ simply mean reading the row of table $E$ at index $\\mathrm{id}($“a”$)$—not a result derived from the shape of the letter or a hand-designed rule. Each row always has $d=d_{\\mathrm{model}}$ components; in this demonstration, $d=3$, so each embedding vector has three numbers.",
+  "Wagi startowe trzeba jakoś wypełnić liczbami. W praktyce używa się do tego generatora pseudolosowego (np.":"Initial weights have to be filled with numbers somehow. In practice, a pseudorandom generator is used (e.g.",
+  "przy tym samym ziarnie i tej samej kolejności wywołań zawsze produkuje tę samą sekwencję liczb, więc wagi startowe są odtwarzalne.":"with the same seed and call order, it always produces the same sequence of numbers, so the initial weights are reproducible.",
+  "może przy kolejnym uruchomieniu dać inne wagi początkowe.":"may produce different initial weights on the next run.",
+  "gdy wagi, dane i kolejność operacji są już ustalone, forward pass w typowej implementacji sekwencyjnej jest deterministyczny. Drobne różnice mogą pojawić się przy równoległych operacjach lub na różnym sprzęcie.":"once weights, data, and operation order are fixed, the forward pass in a typical sequential implementation is deterministic. Small differences may still appear with parallel operations or on different hardware.",
+  "Wagi są liczbami, które model dostosowuje podczas treningu. Zapis \\(W^{(E)}\\) oznacza macierz wag przypisaną do embeddingów, a indeksy w nawiasach kwadratowych wskazują konkretny element tej macierzy. Wektor lub macierz nie jest pojedynczą liczbą: ma określoną liczbę wierszy i kolumn, a każdy element może być aktualizowany.":"Weights are numeric values that the model adjusts during training. The notation \\(W^{(E)}\\) denotes the weight matrix associated with embeddings, while square-bracket indices identify a specific matrix element. A vector or matrix is not a single number: it has a specific number of rows and columns, and each element can be updated.",
+  "Jeżeli \\(d_{\\mathrm{model}}=3\\), każdy embedding ma trzy składowe. Dla \\(V\\) znaków tablica embeddingów ma zwykle \\(V\\) wierszy i \\(d_{\\mathrm{model}}\\) kolumn, czyli kształt \\(V\\times d_{\\mathrm{model}}\\). Wybranie identyfikatora \\(u_t\\) oznacza pobranie odpowiedniego wiersza. To operacja indeksowania, nie mnożenie przez sam identyfikator.":"If \\(d_{\\mathrm{model}}=3\\), each embedding has three components. For a vocabulary of \\(V\\) characters, the embedding table usually has \\(V\\) rows and \\(d_{\\mathrm{model}}\\) columns, giving it shape \\(V\\times d_{\\mathrm{model}}\\). Selecting ID \\(u_t\\) means retrieving the corresponding row. This is indexing, not multiplication by the ID itself.",
+  "To uproszczony kod inicjalizacji z ustalonym ziarnem. Macierz pozycji P oraz pozostałe wagi są wypełniane podobnymi pętlami po wierszach i kolumnach; późniejszy trening (SGD) może zmienić każdą z tych wartości.":"This is simplified initialization code with a fixed seed. The positional matrix P and remaining weights are filled using similar row-and-column loops; later training (SGD) may change any of these values.",
+  "To samo równanie zapisane składowo (dla każdej współrzędnej wektora osobno):":"The same equation written component by component (for each vector coordinate separately):",
+  "Identyfikator znaku jest liczbą całkowitą, ale warstwy transformera potrzebują wektora liczb rzeczywistych. Tablica embeddingów zamienia więc identyfikator na \\(e_t\\), czyli wektor długości \\(d_{\\mathrm{model}}\\). Każda składowa tego wektora jest uczona i może kodować cechy przydatne dla zadania.":"A character ID is an integer, but transformer layers need a real-valued vector. The embedding table therefore maps the ID to \\(e_t\\), a vector of length \\(d_{\\mathrm{model}}\\). Each component is learned and can encode features useful for the task.",
+  "Wektor pozycyjny \\(p_t\\) wnosi informację o miejscu znaku w oknie. Bez niego reprezentacje identycznego znaku na różnych pozycjach mogłyby być nierozróżnialne na wejściu. Równanie \\(h_t^{(0)}=e_t+p_t\\) oznacza dodawanie składowa po składowej: pierwszą składową embeddingu dodaje się do pierwszej składowej pozycji itd. Wektory muszą więc mieć taki sam wymiar.":"The positional vector \\(p_t\\) contributes information about the character's location in the window. Without it, identical characters at different positions could have indistinguishable input representations. The equation \\(h_t^{(0)}=e_t+p_t\\) means component-wise addition: the first embedding component is added to the first positional component, and so on. The vectors must therefore have the same dimension.",
+  "Indeks \\(t\\) oznacza pozycję w sekwencji, a \\((0)\\) oznacza etap początkowy przed blokiem transformera. Nie jest to potęgowanie. Wynik \\(h_t^{(0)}\\) jest wejściową reprezentacją, którą kolejne warstwy będą przekształcać.":"The index \\(t\\) denotes the sequence position, and \\((0)\\) denotes the initial stage before the transformer block. It is not an exponent. The result \\(h_t^{(0)}\\) is the input representation that subsequent layers will transform.",
+  "Tablica P ma dokładnie jeden wiersz na każdą pozycję w oknie. Każdy wiersz zawiera D_MODEL liczb rzeczywistych; dodawanie embeddingu znaku i pozycji odbywa się składowa po składowej, bez mnożenia.":"The P table has exactly one row for each position in the window. Each row contains D_MODEL real numbers; the character and positional embeddings are added component by component, without multiplication.",
+  "Każda projekcja jest osobną transformacją liniową tej samej reprezentacji wejściowej. \\(W_Q\\), \\(W_K\\) i \\(W_V\\) nie muszą mieć tych samych wartości, ponieważ są uczone do różnych ról. Query służy do zadania pytania o kontekst, Key do obliczania dopasowania, a Value zawiera informację, która zostanie zebrana po obliczeniu wag uwagi.":"Each projection is a separate linear transformation of the same input representation. \\(W_Q\\), \\(W_K\\), and \\(W_V\\) need not have the same values because they learn different roles. Query asks for relevant context, Key is used to calculate matches, and Value carries the information collected after attention weights are computed.",
+  "W zapisie \\(q_t=W_Qh_t\\) wymiar wektora wynikowego zależy od liczby wierszy \\(W_Q\\), a liczba kolumn tej macierzy musi odpowiadać wymiarowi \\(h_t\\). Analogiczne zasady dotyczą \\(k_t\\) i \\(v_t\\). Bias może występować w implementacji, nawet jeśli został pominięty w skróconym wzorze.":"In \\(q_t=W_Qh_t\\), the output-vector dimension is determined by the number of rows in \\(W_Q\\), while the matrix's number of columns must match the dimension of \\(h_t\\). The same rules apply to \\(k_t\\) and \\(v_t\\). An implementation may include a bias even when it is omitted from a compact equation.",
+  "Te wektory nie są jeszcze odpowiedzią modelu. Są pośrednimi reprezentacjami używanymi przez attention. Dopiero po porównaniu Query z Key i połączeniu Value powstaje wynik uwagi.":"These vectors are not yet the model's answer. They are intermediate representations used by attention. The attention output is produced only after Query is compared with Key and the Value vectors are combined.",
+  "Trzy zagnieżdżone pętle liczą trzy osobne projekcje liniowe. Wektory Q, K i V to zwykłe tablice liczb zmiennoprzecinkowych; powstają przez mnożenie wektora wejściowego przez odpowiednią macierz wag.":"Three nested loops compute three separate linear projections. Q, K, and V are ordinary arrays of floating-point numbers, computed by multiplying the input vector by the corresponding weight matrix.",
+  "Odejmowanie maksimum od wszystkich score’ów przed policzeniem wykładników to standardowa stabilizacja numeryczna: zapobiega przepełnieniu przy dużych wartościach. Matematycznie wynik softmaxu się przez to nie zmienia, bo ten sam czynnik kasuje się w liczniku i mianowniku.":"Subtracting the maximum from all scores before exponentiation is standard numerical stabilization: it prevents overflow for large values. The softmax result is mathematically unchanged because the same factor cancels in the numerator and denominator.",
+  "Iloczyn skalarny \\(q_t^\\top k_j\\) mnoży składowe obu wektorów parami i sumuje wyniki. Ocenia w ten sposób zgodność zapytania pozycji \\(t\\) z kluczem pozycji \\(j\\). Dzielenie przez \\(\\sqrt{d_k}\\) skaluje wartości, gdzie \\(d_k\\) jest liczbą składowych Query/Key. Nie jest to normalizacja do sumy 1 — tę rolę pełni dopiero softmax.":"The dot product \\(q_t^\\top k_j\\) multiplies corresponding vector components and sums the products. It measures how well the query at position \\(t\\) matches the key at position \\(j\\). Dividing by \\(\\sqrt{d_k}\\) rescales the values, where \\(d_k\\) is the number of Query/Key components. This is not normalization to a sum of 1; that is the role of softmax.",
+  "Maska przyczynowa jest widoczna wprost w warunku":"The causal mask is explicit in the condition",
+  ": pozycja i sumuje wkłady wyłącznie z pozycji od 0 do i włącznie. Dzięki temu reprezentacja nie korzysta z przyszłych znaków, których w prawdziwym generowaniu jeszcze nie ma.":": position i sums contributions only from positions 0 through i, inclusive. This prevents the representation from using future characters that are not yet available during real generation.",
+  "MLP przetwarza reprezentację po attention, zwykle w dwóch projekcjach liniowych z nieliniowością pomiędzy nimi. \\(W_1r_t+b_1\\) tworzy reprezentację ukrytą; funkcja aktywacji \\(\\phi\\) działa na każdej składowej osobno; \\(W_2\\) mapuje ją z powrotem do szerokości modelu. Biasy \\(b_1\\) i \\(b_2\\) są dodawane do odpowiednich składowych wyniku warstwy.":"The MLP processes the representation after attention, usually using two linear projections with a nonlinearity between them. \\(W_1r_t+b_1\\) creates a hidden representation; the activation function \\(\\phi\\) acts on each component separately; \\(W_2\\) maps it back to the model width. Biases \\(b_1\\) and \\(b_2\\) are added to the corresponding output components.",
+  "Wymiary muszą pasować: jeśli reprezentacja wejściowa ma \\(d_{\\mathrm{model}}\\) składowych, a warstwa ukryta ma \\(d_{\\mathrm{hidden}}\\), to pierwsza projekcja przekształca \\(d_{\\mathrm{model}}\\to d_{\\mathrm{hidden}}\\), a druga \\(d_{\\mathrm{hidden}}\\to d_{\\mathrm{model}}\\). Nieliniowość pozwala sieci tworzyć bardziej złożone przekształcenia niż samo mnożenie przez macierze.":"Dimensions must match: if the input representation has \\(d_{\\mathrm{model}}\\) components and the hidden layer has \\(d_{\\mathrm{hidden}}\\), the first projection maps \\(d_{\\mathrm{model}}\\to d_{\\mathrm{hidden}}\\), and the second maps \\(d_{\\mathrm{hidden}}\\to d_{\\mathrm{model}}\\). The nonlinearity allows the network to create more complex transformations than matrix multiplication alone.",
+  "Funkcja straty to entropia krzyżowa (cross-entropy) względem prawdziwego celu $y^{\\mathrm{id}}$. Im mniejsze prawdopodobieństwo, które model przypisał poprawnemu znakowi, tym większa strata:":"The loss function is cross-entropy with respect to the true target $y^{\\mathrm{id}}$. The lower the probability assigned to the correct character, the larger the loss:",
+  "Predykcja (greedy) to indeks znaku o największym prawdopodobieństwie:":"The greedy prediction is the index of the character with the highest probability:",
+  "Logit \\(\\ell_j\\) jest surową oceną przypisaną kandydatowi \\(j\\). Może przyjmować dowolne wartości rzeczywiste i nie musi mieścić się w przedziale od 0 do 1. Softmax oblicza wykładnik każdego logitu i dzieli go przez sumę wykładników wszystkich logitów, dzięki czemu powstaje rozkład prawdopodobieństwa.":"A logit \\(\\ell_j\\) is a raw score assigned to candidate \\(j\\). It can take any real value and need not lie between 0 and 1. Softmax exponentiates each logit and divides it by the sum of all logits' exponentials, producing a probability distribution.",
+  "W mianowniku \\(\\sum_{k=1}^{V}\\exp(\\ell_k)\\) sumujemy po wszystkich \\(V\\) możliwych symbolach. Indeks \\(k\\) jest indeksem sumowania; \\(j\\) oznacza konkretny symbol, którego prawdopodobieństwo liczymy. Po softmaxie wszystkie prawdopodobieństwa są nieujemne, a ich suma wynosi 1.":"In the denominator \\(\\sum_{k=1}^{V}\\exp(\\ell_k)\\), we sum over all \\(V\\) possible symbols. Index \\(k\\) is the summation index; \\(j\\) denotes the particular symbol whose probability is being calculated. After softmax, all probabilities are non-negative and sum to 1.",
+  "W stracie \\(\\mathcal{L}=-\\log p_y\\), \\(p_y\\) oznacza prawdopodobieństwo przypisane poprawnemu symbolowi \\(y\\). Minus sprawia, że małe prawdopodobieństwo poprawnej odpowiedzi daje dużą dodatnią stratę. Na przykład \\(p_y=1\\) daje stratę 0, natomiast \\(p_y\\) bliskie 0 daje bardzo dużą stratę. Strata mierzy jakość przewidywania dla celu, nie jest bezpośrednio prawdopodobieństwem ani oceną całej wiedzy modelu.":"In the loss \\(\\mathcal{L}=-\\log p_y\\), \\(p_y\\) is the probability assigned to the correct symbol \\(y\\). The minus sign makes a small probability for the correct answer produce a large positive loss. For example, \\(p_y=1\\) gives a loss of 0, while \\(p_y\\) close to 0 gives a very large loss. Loss measures prediction quality for a target; it is not itself a probability or a rating of the model's overall knowledge.",
+  "W rozdziale 1 wyliczyliśmy pełny wynik modelu (forward pass) oraz wartość straty dla jednego przykładu. Teraz korzystamy dokładnie z tego wyniku: cofamy się od skalarnego błędu przez kolejne operacje, zbieramy gradienty względem parametrów i wykonujemy jeden krok aktualizacji SGD. Dzięki temu widać, w jaki sposób informacja o pomyłce na wyjściu wraca do wag.":"In Chapter 1, we computed the full model output (forward pass) and the loss for one example. Now we use that exact result: we step backward from the scalar error through successive operations, collect gradients with respect to the parameters, and take one SGD update step. This shows how information about the output error flows back to the weights.",
+  "W uproszczonym obrazie autogradu budowany jest graf operacji skalarnych: każda liczba pośrednia pamięta, z jakich argumentów powstała. Startujemy od pochodnej straty względem samej siebie:":"In a simplified view of autograd, a graph of scalar operations is built: each intermediate number remembers which arguments produced it. We start with the derivative of the loss with respect to itself:",
+  "Lokalne reguły różniczkowania (przykłady najczęściej używanych operacji) pozwalają „przenieść” gradient wstecz przez każdą krawędź grafu:":"Local differentiation rules (examples of commonly used operations) let us propagate the gradient backward along each edge of the graph:",
+  "Gradienty zbierają się addytywnie w polach $\\partial\\mathcal{L}/\\partial\\theta$ dla każdego parametru $\\theta\\in\\{E,P,W_Q,W_K,W_V,W_O,W_1,W_2,W_{\\mathrm{out}},\\ldots\\}$. Gdy ten sam parametr uczestniczy w wielu operacjach, jego wkłady gradientowe są sumowane.":"Gradients accumulate additively in the fields $\\partial\\mathcal{L}/\\partial\\theta$ for every parameter $\\theta\\in\\{E,P,W_Q,W_K,W_V,W_O,W_1,W_2,W_{\\mathrm{out}},\\ldots\\}$. When the same parameter participates in multiple operations, its gradient contributions are summed.",
+  "W przejściu w przód model oblicza wynik, a funkcja straty porównuje go z celem. Propagacja wsteczna (backpropagation) oblicza następnie, jak zmiana każdej pośredniej wartości i każdego parametru wpływa na tę stratę. Reguła łańcuchowa łączy pochodne kolejnych operacji: wpływ parametru na wynik, a następnie wpływ wyniku na stratę.":"During the forward pass, the model computes an output and the loss compares it with the target. Backpropagation then calculates how changing each intermediate value and parameter affects the loss. The chain rule combines derivatives of successive operations: how a parameter affects the output, and how the output affects the loss.",
+  "Pochodna \\(\\partial\\mathcal{L}/\\partial\\theta\\) odpowiada na pytanie: jak lokalnie zmieni się strata, gdy nieznacznie zmienimy parametr \\(\\theta\\), pozostawiając pozostałe parametry bez zmian? Dodatnia pochodna oznacza, że zwiększenie parametru lokalnie zwiększa stratę; ujemna — że ją zmniejsza. Wielkość pochodnej opisuje lokalną wrażliwość, nie gotową wartość aktualizacji.":"The derivative \\(\\partial\\mathcal{L}/\\partial\\theta\\) answers this question: how would the loss change locally if parameter \\(\\theta\\) changed slightly while the other parameters stayed fixed? A positive derivative means increasing the parameter locally increases the loss; a negative derivative means it decreases the loss. The derivative's magnitude describes local sensitivity, not the final update value.",
+  "W programie demonstracyjnym współczynnik uczenia wynosi $\\eta=0{,}025$. Przed kolejnym przykładem gradienty są zerowane, żeby nie mieszać sygnałów z różnych okien treningowych. W materiale gradienty całego modelu są dodatkowo ilustrowane numerycznie (różnice centralne), co ułatwia sprawdzenie idei bez pełnej implementacji autogradu.":"In the demonstration program, the learning rate is $\\eta=0.025$. Gradients are reset before the next example so signals from different training windows are not mixed. In this material, gradients for the entire model are also illustrated numerically using central differences, making it easier to check the idea without a full autograd implementation.",
+  "To bezpośrednie zastosowanie reguły łańcuchowej do ostatniej warstwy liniowej: gradient biasu jest równy gradientowi logitów, a gradient elementu macierzy to iloczyn odpowiedniej składowej":"This is a direct application of the chain rule to the final linear layer: the bias gradient equals the logit gradient, and the gradient of a matrix element is the product of the corresponding component",
+  "i gradientu logitu. Gradienty wcześniejszych warstw (MLP, attention, wektory osadzeń) wymagają dalszego cofania przez kolejne operacje.":"and the logit gradient. Gradients for earlier layers (MLP, attention, and embedding vectors) require further backpropagation through successive operations.",
+  "W pliku demonstracyjnym gradienty całego modelu są liczone numerycznie metodą różnic centralnych: dla każdego parametru porównuje się stratę po małym przesunięciu „w górę” i „w dół”. To czytelny skrót edukacyjny, który pokazuje ideę gradientu bez pełnego autogradu; w prawdziwym trenowaniu sieci stosuje się automatyczne różniczkowanie, rzędy wielkości tańsze obliczeniowo.":"In the demonstration file, gradients for the entire model are computed numerically using central differences: for each parameter, the loss is compared after a small shift up and down. This is an easy-to-follow educational shortcut that illustrates the idea of a gradient without full autograd; real neural-network training uses automatic differentiation, which is orders of magnitude more computationally efficient.",
+  "W tym przykładzie każdy token to pojedynczy znak; inne modele mogą tokenizować tekst na fragmenty słów.":"In this example, each token is a single character; other models may tokenize text into word fragments.",
+  "W tym przykładzie generator używa jawnego ziarna seed=20261016, więc macierze demonstracyjne można odtworzyć przy każdym uruchomieniu.":"In this example, the generator uses the explicit seed seed=20261016, so the demonstration matrices are reproducible across runs.",
+  "Wymiary muszą się zgadzać:":"Dimensions must match:",
+  "Warstwa MLP":"MLP layer",
+  "Embedding znaku + pozycja":"Character embedding + position",
+  "Logity, softmax i strata":"Logits, softmax, and loss",
+  "Rozmiar słownika":"Vocabulary size",
+  "Słownik":"Vocabulary",
+  "zatem V=":"so V=",
+  "ID mapping":"ID mapping",
+  "Logity ℓ = h_final·Wout+b_out:":"Logits ℓ = h_final·Wout+b_out:",
+  "Logity, softmax i strata":"Logits, softmax, and loss",
+  "Wagi E, P, WQ, WK, WV, WO, W1, W2, Wout oraz biasy zostały ustalone deterministycznie do demonstracji.":"The E, P, WQ, WK, WV, WO, W1, W2, and Wout weights, along with the biases, were set deterministically for this demonstration.",
+  "suma = 1.00000":"sum = 1.00000",
+  "(suma = 1.00000)":"(sum = 1.00000)",
+  "Strata przed aktualizacją:":"Loss before the update:",
+  "Po pojedynczym kroku SGD strata wynosi":"After one SGD step, the loss is",
+  "Parametr\tPrzed\tGradient\tPo SGD":"Parameter\tBefore\tGradient\tAfter SGD"
+ });
+ const polishFixes = [
+ ["is the sorted set of all unique characters the model can recognize; $V$ is the number of elements in that set.\nThe tokenization function assigns each character its index:", "to posortowany zbiór wszystkich unikalnych znaków, które model potrafi rozpoznać; $V$ oznacza liczbę elementów tego zbioru.\nFunkcja tokenizacji przypisuje każdemu znakowi jego indeks:"],
+ ["One training example consists of a window of $T$ consecutive characters (the context) and a target—the character that follows that window in the data:", "Jeden przykład treningowy składa się z okna $T$ kolejnych znaków (kontekstu) oraz celu — znaku, który w danych występuje bezpośrednio po tym oknie:"],
+ ["The tokenization function assigns each character its index:", "Funkcja tokenizacji przypisuje każdemu znakowi jego indeks:"],
+ ["Słownik", "Słownik"],
+ ["One training example", "Jeden przykład treningowy"],
+ ["consecutive characters (the context)", "kolejnych znaków (kontekstu)"],
+ ["and a target—the character that follows that window in the data:", "oraz celu — znaku, który w danych występuje bezpośrednio po tym oknie:"],
+ ["We treat text as a sequence of characters. Before the neural network computes anything, each character must receive a stable numeric ID. The vocabulary", "Tekst traktujemy jako ciąg znaków. Zanim sieć neuronowa cokolwiek obliczy, każdy znak musi otrzymać stały identyfikator liczbowy. Słownik"], ["Specific values such as", "Konkretne wartości, takie jak"], ["simply mean reading the row of table", "oznaczają po prostu odczyt wiersza tablicy"], ["To predict the next character, we use only the representation at the final position,", "Aby przewidzieć następny znak, używamy wyłącznie reprezentacji z ostatniej pozycji,"], ["Thanks to the causal mask, this position can already “see” the entire available context (characters", "Dzięki masce przyczynowej ta pozycja może już „widzieć” cały dostępny kontekst (znaki"], ["so it is the natural place from which the model reads a summary of the window and predicts the target character.", "dlatego to naturalne miejsce, z którego model odczytuje podsumowanie okna i przewiduje znak docelowy."], ["The dot product", "Iloczyn skalarny"], ["multiplies corresponding vector components and sums the products. It measures how well the query at position", "mnoży odpowiadające sobie składowe wektorów i sumuje iloczyny. Mierzy dopasowanie zapytania na pozycji"], ["matches the key at position", "do klucza na pozycji"], ["Dividing by", "Dzielenie przez"], ["rescales the values, where", "przeskalowuje wartości, przy czym"], ["is the number of Query/Key components. This is not normalization to a sum of 1; that is the role of softmax.", "to liczba składowych Query/Key. Nie jest to normalizacja do sumy równej 1 — tę rolę pełni softmax."], ["The causal mask enforces the condition", "Maska przyczynowa wymusza warunek"], ["Softmax converts matching scores into weights", "Softmax przekształca wyniki dopasowania w wagi"], ["Each weight is non-negative, and the weights over allowed positions sum to 1. Finally,", "Każda waga jest nieujemna, a suma wag dla dozwolonych pozycji wynosi 1. Na końcu"], ["The loss function is cross-entropy with respect to the true target", "Funkcją straty jest entropia krzyżowa względem prawdziwego celu"], ["The lower the probability assigned to the correct character, the larger the loss:", "Im mniejsze prawdopodobieństwo przypisane poprawnemu znakowi, tym większa strata:"], ["The greedy prediction is the index of the character with the highest probability:", "Predykcja zachłanna (greedy) to indeks znaku o największym prawdopodobieństwie:"], ["It can take any real value and need not lie between 0 and 1. Softmax exponentiates each logit and divides it by the sum of all logits' exponentials, producing a probability distribution.", "Może przyjmować dowolną wartość rzeczywistą i nie musi mieścić się w przedziale od 0 do 1. Softmax oblicza wykładnik każdego logitu i dzieli go przez sumę wykładników wszystkich logitów, tworząc rozkład prawdopodobieństwa."], ["During the forward pass, the model computes an output and the loss compares it with the target. Backpropagation then calculates how changing each intermediate value and parameter affects the loss.", "Podczas przejścia w przód model oblicza wynik, a funkcja straty porównuje go z celem. Propagacja wsteczna oblicza następnie, jak zmiana każdej wartości pośredniej i każdego parametru wpływa na stratę."], ["The chain rule combines derivatives of successive operations:", "Reguła łańcuchowa łączy pochodne kolejnych operacji:"], ["After collecting the gradients, we take one gradient-descent step. For each scalar parameter", "Po zebraniu gradientów wykonujemy jeden krok spadku gradientowego. Dla każdego parametru skalarnego"], ["In the demonstration program, the learning rate is", "W programie demonstracyjnym współczynnik uczenia wynosi"], ["Gradients are reset before the next example so signals from different training windows are not mixed.", "Przed kolejnym przykładem gradienty są zerowane, aby nie mieszać sygnałów pochodzących z różnych okien treningowych."], ["Weights są liczbami, które model dostosowuje podczas treningu.", "Wagi są liczbami, które model dostosowuje podczas treningu."], ["maps it back to the model width.", "przekształca ją z powrotem do wymiaru modelu."], ["components and the hidden layer has", "składowych, a warstwa ukryta ma"], ["the first projection maps", "pierwsza projekcja przekształca wymiar"], ["and the second maps", "a druga przekształca wymiar"], ["This is a numerical demonstration method; it is not identical to automatic differentiation.", "Jest to numeryczna metoda demonstracyjna, która nie jest tym samym co automatyczne różniczkowanie."], ["The table shows every scalar parameter before the step, its gradient, and its value after the SGD step.", "Tabela pokazuje każdy parametr skalarny przed krokiem, jego gradient oraz wartość po kroku SGD."], ["Loss before the update:", "Strata przed aktualizacją:"], ["After one SGD step, the loss is", "Po jednym kroku SGD strata wynosi"], ["The derivative", "Pochodna"], ["The notation", "Zapis"], ["denotes the weight matrix associated with embeddings, while square-bracket indices identify a specific matrix element.", "oznacza macierz wag powiązaną z osadzeniami, a indeksy w nawiasach kwadratowych wskazują konkretny element macierzy."],
+ ["vocabulary size (number of unique characters the model can recognize)", "rozmiar słownika (liczba unikalnych znaków rozpoznawanych przez model)"],
+ ["width of the internal representation", "wymiar reprezentacji wewnętrznej"],
+ ["width of the MLP hidden layer", "wymiar warstwy ukrytej MLP"],
+ ["learning rate, the parameter-update step size", "współczynnik uczenia, określający wielkość kroku aktualizacji parametrów"],
+ ["Position indices in the window:", "Indeksy pozycji w oknie:"],
+ ["Vector component indices:", "Indeksy składowych wektora:"],
+ ["For each position `t=0,…,T−1` we build the input representation as the sum of the character embedding and the positional embedding:", "Dla każdej pozycji `t=0,…,T−1` tworzymy reprezentację wejściową jako sumę osadzenia znaku i osadzenia pozycyjnego:"],
+ ["To samo równanie zapisane składowo (dla każdej współrzędnej wektora osobno):", "To samo równanie zapisane składowo, czyli osobno dla każdej współrzędnej wektora:"],
+ ["3. Embedding + pozycja", "3. Osadzenia i informacja o pozycji"],
+ ["Embedding znaku + pozycja", "Osadzenie znaku + informacja o pozycji"],
+ ["embedding i pozycja są dodawane?", "osadzenia i informacja o pozycji są dodawane?"],
+ ["embeddingu", "osadzenia"],
+ ["embedding", "osadzenie"]];
+ const forward=Object.entries(translations).sort((a,b)=>b[0].length-a[0].length);
+ // Keep each node's original Polish text so switching languages is reversible.
+ const originalText=new WeakMap();
+ const originalAttrs=new WeakMap();
+ const originalTitle=document.title;
+
+ function replaceText(text, pairs){
+   let result=text;
+   for(const [from,to] of pairs){
+     if(!from || !result.includes(from)) continue;
+     const escaped=from.replace(/[.*+?^${}()|[\]\\]/g,'\\$&');
+     const startsWord=/^[\p{L}\p{N}_]/u.test(from);
+     const endsWord=/[\p{L}\p{N}_]$/u.test(from);
+     const pattern=(startsWord?'(?<![\p{L}\p{N}_])':'')+escaped+(endsWord?'(?![\p{L}\p{N}_])':'');
+     result=result.replace(new RegExp(pattern,'gu'),to);
+   }
+   return result;
+ }
+ function translateNode(node, lang){
+   if(node.nodeType===Node.TEXT_NODE){
+     if(!originalText.has(node)) originalText.set(node,node.nodeValue);
+     const original=originalText.get(node);
+     if(original.trim()) node.nodeValue=lang==='en'?replaceText(original,forward):replaceText(original,polishFixes);
+   } else if(node.nodeType===Node.ELEMENT_NODE){
+     if(node.tagName==='SCRIPT' || node.tagName==='STYLE' || node.tagName==='SELECT' || node.closest('.language-switch') || node.closest('[data-lang-content]') || node.closest('[data-extra-explanation]')) return;
+     if(!originalAttrs.has(node)){
+       const attrs={};
+       for(const attr of ['aria-label','title','alt']) if(node.hasAttribute(attr)) attrs[attr]=node.getAttribute(attr);
+       originalAttrs.set(node,attrs);
+     }
+     const attrs=originalAttrs.get(node);
+     for(const attr of ['aria-label','title','alt']){
+       if(Object.prototype.hasOwnProperty.call(attrs,attr)){
+         node.setAttribute(attr,lang==='en'?replaceText(attrs[attr],forward):attrs[attr]);
+       }
+     }
+     for(const child of node.childNodes) translateNode(child,lang);
+   }
+ }
+ function setLanguage(lang){
+   document.querySelectorAll('[data-lang-content]').forEach(section=>{
+     section.hidden = section.getAttribute('data-lang-content') !== lang;
+   });
+   translateNode(document.body,lang);
+   document.documentElement.lang=lang;
+   document.title=lang==='en'?'AI - Chapter 1 - Theory':'AI - Chapter 1 - Teoria';
+   const label=document.querySelector('.language-switch label');
+   if(label) label.textContent=lang==='en'?'Language':'Język';
+   select.setAttribute('aria-label',lang==='en'?'Choose language':'Wybierz język');
+   select.value=lang;
+ }
+ setLanguage(select.value);
+ select.addEventListener('change',()=>setLanguage(select.value));
+ const observer=new MutationObserver(records=>{
+   for(const record of records){
+     for(const node of record.addedNodes){
+       // New panels are authored in Polish, so preserve their originals before translating.
+       translateNode(node,select.value);
+     }
+   }
+ });
+ observer.observe(document.body,{childList:true,subtree:true});
+})();
+</script>
+
+
+
+</body></html>
